@@ -6,6 +6,9 @@
 //
 
 import Foundation
+#if canImport(JavaScriptCore)
+import JavaScriptCore
+#endif
 
 // MARK: - 脚本任务状态
 
@@ -45,7 +48,6 @@ class ScriptEngine {
         )
         tasks[taskId] = task
 
-        // 在后台线程执行脚本
         queue.async { [weak self] in
             self?.executeScript(taskId: taskId, script: script, params: params)
         }
@@ -83,7 +85,6 @@ class ScriptEngine {
             task.log = "[\(timestamp())] 开始执行脚本"
         }
 
-        // 解析脚本类型
         let scriptType = detectScriptType(script)
 
         switch scriptType {
@@ -95,10 +96,8 @@ class ScriptEngine {
             executeLuaScript(taskId: taskId, script: script, params: params)
         }
 
-        // 检查是否被停止
         if let task = tasks[taskId], task.status == .stopped { return }
 
-        // 标记完成
         updateTask(taskId) { task in
             task.status = .completed
             task.progress = 1.0
@@ -112,15 +111,12 @@ class ScriptEngine {
     }
 
     private func detectScriptType(_ script: String) -> ScriptType {
-        // IEC 脚本特征: main() 函数, auto.waitFor 等关键词
         if script.contains("main()") || script.contains("auto.waitFor") || script.contains("auto.setMode") {
             return .iec
         }
-        // Lua 脚本特征
-        if script.hasPrefix("--") || script.contains("function ") && script.contains("local ") {
+        if script.hasPrefix("--") || (script.contains("function ") && script.contains("local ")) {
             return .lua
         }
-        // 默认 JavaScript
         return .javascript
     }
 
@@ -129,11 +125,8 @@ class ScriptEngine {
     private func executeIECScript(taskId: String, script: String, params: [String: AnyCodable]?) {
         appendLog(taskId, "[\(timestamp())] 执行 IEC 脚本")
 
-        // IEC 脚本引擎 — 实现自动化 API
-        // 提供: auto, click, longClick, swipe, input, findNode, findColor, ocr 等接口
         let engine = IECScriptEngine()
 
-        // 注入参数
         if let params = params {
             for (key, value) in params {
                 engine.setGlobal(key: key, value: value.value)
@@ -156,28 +149,34 @@ class ScriptEngine {
     // MARK: - JavaScript 执行
 
     private func executeJavaScript(taskId: String, script: String, params: [String: AnyCodable]?) {
+        #if canImport(JavaScriptCore)
         appendLog(taskId, "[\(timestamp())] 执行 JavaScript 脚本")
 
-        // 使用 JavaScriptCore 执行
         let jsContext = JSContext()
 
-        // 注入自动化 API
         injectAutomationAPI(into: jsContext, taskId: taskId)
 
-        // 注入参数
         if let params = params {
             for (key, value) in params {
-                jsContext?.setObject(value.value, forKeyedSubkey: key as NSString)
+                jsContext?.setObject(value.value, forKeyedSubscript: key as NSString)
             }
         }
 
-        jsContext?.exceptionHandler = { _, exception in
+        jsContext?.exceptionHandler = { context: JSContext?, exception: JSValue? in
             self.appendLog(taskId, "[\(self.timestamp())] JS Error: \(exception?.toString() ?? "unknown")")
         }
 
         jsContext?.evaluateScript(script)
 
         appendLog(taskId, "[\(timestamp())] JavaScript 脚本执行完成")
+        #else
+        appendLog(taskId, "[\(timestamp())] JavaScriptCore 不可用，无法执行脚本")
+        updateTask(taskId) { task in
+            task.status = .failed
+            task.error = "JavaScriptCore not available"
+            task.completedAt = Date()
+        }
+        #endif
     }
 
     // MARK: - Lua 执行 (预留)
@@ -193,44 +192,43 @@ class ScriptEngine {
 
     // MARK: - 注入自动化 API
 
+    #if canImport(JavaScriptCore)
     private func injectAutomationAPI(into context: JSContext?, taskId: String) {
         guard let context = context else { return }
 
         // auto 对象
-        let autoBlock: @convention(block) () -> Void = {
-            // 自动化控制
-        }
-        context.setObject(autoBlock, forKeyedSubkey: "auto" as NSString)
+        let autoBlock: @convention(block) () -> Void = {}
+        context.setObject(autoBlock, forKeyedSubscript: "auto" as NSString)
 
-        // click(x, y) — 触控点击
+        // click(x, y)
         let clickBlock: @convention(block) (Int, Int) -> Void = { x, y in
             TouchSimulator.tap(at: CGPoint(x: x, y: y))
             self.appendLog(taskId, "[\(self.timestamp())] click(\(x), \(y))")
         }
-        context.setObject(clickBlock, forKeyedSubkey: "click" as NSString)
+        context.setObject(clickBlock, forKeyedSubscript: "click" as NSString)
 
         // longClick(x, y, duration)
         let longClickBlock: @convention(block) (Int, Int, Int) -> Void = { x, y, duration in
             TouchSimulator.longPress(at: CGPoint(x: x, y: y), duration: TimeInterval(duration) / 1000)
             self.appendLog(taskId, "[\(self.timestamp())] longClick(\(x), \(y), \(duration))")
         }
-        context.setObject(longClickBlock, forKeyedSubkey: "longClick" as NSString)
+        context.setObject(longClickBlock, forKeyedSubscript: "longClick" as NSString)
 
         // swipe(x1, y1, x2, y2, duration)
         let swipeBlock: @convention(block) (Int, Int, Int, Int, Int) -> Void = { x1, y1, x2, y2, duration in
             TouchSimulator.swipe(from: CGPoint(x: x1, y: y1), to: CGPoint(x: x2, y: y2), duration: TimeInterval(duration) / 1000)
             self.appendLog(taskId, "[\(self.timestamp())] swipe(\(x1),\(y1) -> \(x2),\(y2))")
         }
-        context.setObject(swipeBlock, forKeyedSubkey: "swipe" as NSString)
+        context.setObject(swipeBlock, forKeyedSubscript: "swipe" as NSString)
 
         // input(text)
         let inputBlock: @convention(block) (String) -> Void = { text in
             KeyboardSimulator.typeText(text)
             self.appendLog(taskId, "[\(self.timestamp())] input(\(text.prefix(20))...)")
         }
-        context.setObject(inputBlock, forKeyedSubkey: "input" as NSString)
+        context.setObject(inputBlock, forKeyedSubscript: "input" as NSString)
 
-        // screenshot() — 截图返回 base64
+        // screenshot()
         let screenshotBlock: @convention(block) () -> String? = {
             if let image = ScreenCapture.takeScreenshot(),
                let data = image.pngData() {
@@ -238,20 +236,21 @@ class ScriptEngine {
             }
             return nil
         }
-        context.setObject(screenshotBlock, forKeyedSubkey: "screenshot" as NSString)
+        context.setObject(screenshotBlock, forKeyedSubscript: "screenshot" as NSString)
 
         // sleep(ms)
         let sleepBlock: @convention(block) (Int) -> Void = { ms in
             Thread.sleep(forTimeInterval: TimeInterval(ms) / 1000)
         }
-        context.setObject(sleepBlock, forKeyedSubkey: "sleep" as NSString)
+        context.setObject(sleepBlock, forKeyedSubscript: "sleep" as NSString)
 
         // log(msg)
         let logBlock: @convention(block) (String) -> Void = { msg in
             self.appendLog(taskId, "[\(self.timestamp())] [script] \(msg)")
         }
-        context.setObject(logBlock, forKeyedSubkey: "log" as NSString)
+        context.setObject(logBlock, forKeyedSubscript: "log" as NSString)
     }
+    #endif
 
     // MARK: - 辅助
 
@@ -275,21 +274,3 @@ class ScriptEngine {
         return formatter.string(from: Date())
     }
 }
-
-// MARK: - JavaScriptCore (条件导入)
-
-#if canImport(JavaScriptCore)
-import JavaScriptCore
-#else
-// 提供 JSContext 存根，用于编译
-class JSContext {
-    var exceptionHandler: ((JSContext?, JSValue?) -> Void)?
-
-    func evaluateScript(_ script: String) -> JSValue? { return nil }
-    func setObject(_ object: Any?, forKeyedSubscript key: NSString) {}
-}
-
-class JSValue {
-    func toString() -> String? { return nil }
-}
-#endif

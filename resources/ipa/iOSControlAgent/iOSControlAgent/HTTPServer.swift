@@ -261,7 +261,8 @@ class HTTPServer {
               let req = try? JSONDecoder().decode(AgentRequest.self, from: body) else {
             return AgentResponse.fail("Invalid request")
         }
-        clipboardManager.write(req.params?.value as? String ?? "")
+        let value = req.params?["value"]?.value as? String ?? ""
+        clipboardManager.write(value)
         return AgentResponse.ok()
     }
 

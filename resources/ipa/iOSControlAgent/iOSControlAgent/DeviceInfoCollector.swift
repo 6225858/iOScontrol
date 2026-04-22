@@ -39,6 +39,14 @@ class DeviceInfoCollector {
         ]
     }
 
+    private static var languageCode: String {
+        if #available(iOS 16, *) {
+            return Locale.current.language.languageCode?.identifier ?? ""
+        } else {
+            return Locale.current.languageCode ?? ""
+        }
+    }
+
     // MARK: - UDID
 
     private static func getUDID() -> String {

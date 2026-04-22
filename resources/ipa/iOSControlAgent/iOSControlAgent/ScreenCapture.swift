@@ -17,16 +17,25 @@ class ScreenCapture {
         return screenshot.image
         #else
         // 非 XCTest 环境：使用 UIGraphics 渲染
-        DispatchQueue.main.sync {
-            guard let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) else { return }
-            UIGraphicsBeginImageContextWithOptions(window.bounds.size, false, window.screen.scale)
-            window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
-            let image = UIGraphicsGetImageFromCurrentImageContext()
-            UIGraphicsEndImageContext()
-            return image
+        var result: UIImage? = nil
+        if Thread.isMainThread {
+            result = captureWindow()
+        } else {
+            DispatchQueue.main.sync {
+                result = captureWindow()
+            }
         }
-        return nil
+        return result
         #endif
+    }
+
+    private static func captureWindow() -> UIImage? {
+        guard let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) else { return nil }
+        UIGraphicsBeginImageContextWithOptions(window.bounds.size, false, window.screen.scale)
+        window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
+        let image = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        return image
     }
 
     /// 截取屏幕并返回 PNG base64

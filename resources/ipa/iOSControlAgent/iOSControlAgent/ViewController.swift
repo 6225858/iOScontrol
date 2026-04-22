@@ -16,7 +16,7 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        view.backgroundColor = UIColor.systemBackground
+        view.backgroundColor = .white
 
         // 标题
         let titleLabel = UILabel()
@@ -30,7 +30,7 @@ class ViewController: UIViewController {
         statusLabel = UILabel()
         statusLabel.text = "● 运行中"
         statusLabel.font = UIFont.systemFont(ofSize: 18)
-        statusLabel.textColor = .systemGreen
+        statusLabel.textColor = .green
         statusLabel.textAlignment = .center
         statusLabel.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(statusLabel)
@@ -39,7 +39,7 @@ class ViewController: UIViewController {
         portLabel = UILabel()
         portLabel.text = "端口: 19402"
         portLabel.font = UIFont.systemFont(ofSize: 16)
-        portLabel.textColor = .secondaryLabel
+        portLabel.textColor = .gray
         portLabel.textAlignment = .center
         portLabel.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(portLabel)
@@ -48,7 +48,7 @@ class ViewController: UIViewController {
         versionLabel = UILabel()
         versionLabel.text = "v1.0.0"
         versionLabel.font = UIFont.systemFont(ofSize: 14)
-        versionLabel.textColor = .tertiaryLabel
+        versionLabel.textColor = .lightGray
         versionLabel.textAlignment = .center
         versionLabel.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(versionLabel)
@@ -67,14 +67,5 @@ class ViewController: UIViewController {
             versionLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             versionLabel.topAnchor.constraint(equalTo: portLabel.bottomAnchor, constant: 10),
         ])
-    }
-
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-
-        // 启动后自动隐藏到后台 (可选)
-        // DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-        //     UIApplication.shared.perform(#selector(NSXPCConnection.suspend))
-        // }
     }
 }

@@ -3,11 +3,13 @@
 //  iOSControlAgent
 //
 //  IEC 脚本引擎 — 提供 EasyClick 兼容的自动化 API
-//  实现 auto, click, longClick, swipe, input, findNode, findColor, ocr 等接口
 //
 
 import Foundation
 import UIKit
+#if canImport(JavaScriptCore)
+import JavaScriptCore
+#endif
 
 class IECScriptEngine {
 
@@ -20,28 +22,21 @@ class IECScriptEngine {
 
     /// 执行 IEC 脚本
     func execute(_ script: String) throws {
-        // IEC 脚本是基于 JavaScript 的自动化脚本
-        // 通过 JavaScriptCore 注入自动化 API 后执行
-
         #if canImport(JavaScriptCore)
         let context = JSContext()
 
-        // 注入所有自动化 API
         injectIECAPI(into: context)
 
-        // 注入全局变量
         for (key, value) in globals {
-            context.setObject(value, forKeyedSubkey: key as NSString)
+            context?.setObject(value, forKeyedSubscript: key as NSString)
         }
 
-        // 错误处理
         var executionError: Error?
-        context.exceptionHandler = { _, exception in
+        context?.exceptionHandler = { _: JSContext?, exception: JSValue? in
             executionError = IECScriptError.runtime(exception?.toString() ?? "unknown error")
         }
 
-        // 执行脚本
-        context.evaluateScript(script)
+        context?.evaluateScript(script)
 
         if let error = executionError {
             throw error
@@ -53,76 +48,59 @@ class IECScriptEngine {
 
     // MARK: - 注入 IEC API
 
-    private func injectIECAPI(into context: JSContext) {
-        // auto 对象 — 自动化控制
+    #if canImport(JavaScriptCore)
+    private func injectIECAPI(into context: JSContext?) {
+        guard let context = context else { return }
+
+        // auto 对象
         let autoObj = JSValue(newObjectIn: context)
-        autoObj?.setObject(autoWaitForBlock(), forKeyedSubkey: "waitFor" as NSString)
-        autoObj?.setObject(autoSetModeBlock(), forKeyedSubstring: "setMode" as NSString)
-        context.setObject(autoObj, forKeyedSubkey: "auto" as NSString)
+        autoObj?.setObject(autoWaitForBlock(), forKeyedSubscript: "waitFor" as NSString)
+        autoObj?.setObject(autoSetModeBlock(), forKeyedSubscript: "setMode" as NSString)
+        context.setObject(autoObj, forKeyedSubscript: "auto" as NSString)
 
         // click(x, y)
-        context.setObject(clickBlock(), forKeyedSubkey: "click" as NSString)
-
+        context.setObject(clickBlock(), forKeyedSubscript: "click" as NSString)
         // longClick(x, y, duration)
-        context.setObject(longClickBlock(), forKeyedSubkey: "longClick" as NSString)
-
+        context.setObject(longClickBlock(), forKeyedSubscript: "longClick" as NSString)
         // swipe(x1, y1, x2, y2, duration)
-        context.setObject(swipeBlock(), forKeyedSubkey: "swipe" as NSString)
-
+        context.setObject(swipeBlock(), forKeyedSubscript: "swipe" as NSString)
         // press(x, y, duration)
-        context.setObject(pressBlock(), forKeyedSubkey: "press" as NSString)
-
+        context.setObject(pressBlock(), forKeyedSubscript: "press" as NSString)
         // input(text)
-        context.setObject(inputBlock(), forKeyedSubkey: "input" as NSString)
-
+        context.setObject(inputBlock(), forKeyedSubscript: "input" as NSString)
         // screenshot() → base64
-        context.setObject(screenshotBlock(), forKeyedSubkey: "screenshot" as NSString)
-
+        context.setObject(screenshotBlock(), forKeyedSubscript: "screenshot" as NSString)
         // sleep(ms)
-        context.setObject(sleepBlock(), forKeyedSubkey: "sleep" as NSString)
-
+        context.setObject(sleepBlock(), forKeyedSubscript: "sleep" as NSString)
         // toast(msg)
-        context.setObject(toastBlock(), forKeyedSubkey: "toast" as NSString)
-
+        context.setObject(toastBlock(), forKeyedSubscript: "toast" as NSString)
         // log(msg)
-        context.setObject(logBlock(), forKeyedSubkey: "log" as NSString)
-
+        context.setObject(logBlock(), forKeyedSubscript: "log" as NSString)
         // exit()
-        context.setObject(exitBlock(), forKeyedSubkey: "exit" as NSString)
-
+        context.setObject(exitBlock(), forKeyedSubscript: "exit" as NSString)
         // getDeviceWidth() / getDeviceHeight()
-        context.setObject(getDeviceWidthBlock(), forKeyedSubkey: "getDeviceWidth" as NSString)
-        context.setObject(getDeviceHeightBlock(), forKeyedSubkey: "getDeviceHeight" as NSString)
-
-        // findNode(query) — 查找 UI 节点
-        context.setObject(findNodeBlock(), forKeyedSubkey: "findNode" as NSString)
-
-        // findColor(region, color, threshold) — 找色
-        context.setObject(findColorBlock(), forKeyedSubkey: "findColor" as NSString)
-
-        // ocr(region) — OCR 识别
-        context.setObject(ocrBlock(), forKeyedSubkey: "ocr" as NSString)
+        context.setObject(getDeviceWidthBlock(), forKeyedSubscript: "getDeviceWidth" as NSString)
+        context.setObject(getDeviceHeightBlock(), forKeyedSubscript: "getDeviceHeight" as NSString)
+        // findNode(query)
+        context.setObject(findNodeBlock(), forKeyedSubscript: "findNode" as NSString)
+        // findColor(region, color, threshold)
+        context.setObject(findColorBlock(), forKeyedSubscript: "findColor" as NSString)
+        // ocr(region)
+        context.setObject(ocrBlock(), forKeyedSubscript: "ocr" as NSString)
     }
 
     // MARK: - API Block 实现
 
     private func autoWaitForBlock() -> @convention(block) (String) -> Void {
-        return { _ in
-            // auto.waitFor — 等待无障碍服务就绪
-            Thread.sleep(forTimeInterval: 0.5)
-        }
+        return { _ in Thread.sleep(forTimeInterval: 0.5) }
     }
 
     private func autoSetModeBlock() -> @convention(block) (String) -> Void {
-        return { _ in
-            // auto.setMode — 设置模式 (暂无实现)
-        }
+        return { _ in }
     }
 
     private func clickBlock() -> @convention(block) (Int, Int) -> Void {
-        return { x, y in
-            TouchSimulator.tap(at: CGPoint(x: x, y: y))
-        }
+        return { x, y in TouchSimulator.tap(at: CGPoint(x: x, y: y)) }
     }
 
     private func longClickBlock() -> @convention(block) (Int, Int, Int) -> Void {
@@ -133,11 +111,7 @@ class IECScriptEngine {
 
     private func swipeBlock() -> @convention(block) (Int, Int, Int, Int, Int) -> Void {
         return { x1, y1, x2, y2, duration in
-            TouchSimulator.swipe(
-                from: CGPoint(x: x1, y: y1),
-                to: CGPoint(x: x2, y: y2),
-                duration: TimeInterval(duration) / 1000
-            )
+            TouchSimulator.swipe(from: CGPoint(x: x1, y: y1), to: CGPoint(x: x2, y: y2), duration: TimeInterval(duration) / 1000)
         }
     }
 
@@ -148,27 +122,20 @@ class IECScriptEngine {
     }
 
     private func inputBlock() -> @convention(block) (String) -> Void {
-        return { text in
-            KeyboardSimulator.typeText(text)
-        }
+        return { text in KeyboardSimulator.typeText(text) }
     }
 
     private func screenshotBlock() -> @convention(block) () -> String? {
-        return {
-            ScreenCapture.takeScreenshotBase64()
-        }
+        return { ScreenCapture.takeScreenshotBase64() }
     }
 
     private func sleepBlock() -> @convention(block) (Int) -> Void {
-        return { ms in
-            Thread.sleep(forTimeInterval: TimeInterval(ms) / 1000)
-        }
+        return { ms in Thread.sleep(forTimeInterval: TimeInterval(ms) / 1000) }
     }
 
     private func toastBlock() -> @convention(block) (String) -> Void {
         return { msg in
             DispatchQueue.main.async {
-                // 显示 Toast 提示
                 let window = UIApplication.shared.windows.first
                 let label = UILabel()
                 label.text = msg
@@ -194,54 +161,33 @@ class IECScriptEngine {
     }
 
     private func logBlock() -> @convention(block) (String) -> Void {
-        return { msg in
-            print("[IEC] \(msg)")
-        }
+        return { msg in print("[IEC] \(msg)") }
     }
 
     private func exitBlock() -> @convention(block) () -> Void {
-        return {
-            // 标记脚本退出
-            print("[IEC] Script exit() called")
-        }
+        return { print("[IEC] Script exit() called") }
     }
 
     private func getDeviceWidthBlock() -> @convention(block) () -> Int {
-        return {
-            Int(UIScreen.main.bounds.width)
-        }
+        return { Int(UIScreen.main.bounds.width) }
     }
 
     private func getDeviceHeightBlock() -> @convention(block) () -> Int {
-        return {
-            Int(UIScreen.main.bounds.height)
-        }
+        return { Int(UIScreen.main.bounds.height) }
     }
 
     private func findNodeBlock() -> @convention(block) (String) -> [String: Any]? {
-        return { query in
-            // 通过 WDA/XCUIElement 查找节点
-            // 简化实现 — 返回 nil
-            print("[IEC] findNode(\(query)) — not yet implemented")
-            return nil
-        }
+        return { _ in nil }
     }
 
     private func findColorBlock() -> @convention(block) ([String: Any], Int, Int) -> [String: Any]? {
-        return { _, _, _ in
-            // 找色功能 — 需要截图后进行像素匹配
-            print("[IEC] findColor() — not yet implemented")
-            return nil
-        }
+        return { _, _, _ in nil }
     }
 
     private func ocrBlock() -> @convention(block) ([String: Any]?) -> [String: Any]? {
-        return { _ in
-            // OCR 识别 — 需要集成 Vision 框架
-            print("[IEC] ocr() — not yet implemented")
-            return nil
-        }
+        return { _ in nil }
     }
+    #endif
 }
 
 // MARK: - 错误类型
