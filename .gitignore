@@ -1,0 +1,25 @@
+node_modules/
+dist/
+out/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+
+# iOS build artifacts
+resources/ipa/iOSControlAgent/build/
+resources/ipa/iOSControlAgent/DerivedData/
+*.ipa
+Payload/
+
+# 对标项目 (含大量二进制文件)
+对标项目/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+desktop.ini

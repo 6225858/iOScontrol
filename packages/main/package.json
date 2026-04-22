@@ -1,0 +1,24 @@
+{
+  "name": "@ios-control/main",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ios-control/shared": "workspace:*",
+    "electron-store": "^10.0.0",
+    "electron-updater": "^6.3.0"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

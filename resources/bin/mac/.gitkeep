@@ -1,0 +1,11 @@
+# macOS libimobiledevice 工具链
+
+将以下工具放置在此目录:
+- idevice_id
+- ideviceinfo
+- idevicepair
+- ideviceinstaller
+- ideviceimagemounter
+- idevicescreenshot
+- idevicesyslog
+及对应的 dylib 依赖文件

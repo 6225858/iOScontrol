@@ -1,0 +1,73 @@
+name: Build iOSControlAgent IPA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'resources/ipa/iOSControlAgent/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '15.4'
+
+      - name: Install dependencies
+        run: |
+          brew install swift-format 2>/dev/null || true
+
+      - name: Create Xcode project
+        run: |
+          cd resources/ipa/iOSControlAgent
+
+          # 使用 swift package init 创建项目结构不可行（不支持 iOS App）
+          # 需要用 xcodegen 生成项目
+          brew install xcodegen 2>/dev/null || true
+
+      - name: Generate Xcode project with XcodeGen
+        run: |
+          cd resources/ipa/iOSControlAgent
+          xcodegen generate
+
+      - name: Build
+        run: |
+          cd resources/ipa/iOSControlAgent
+          xcodebuild \
+            -project iOSControlAgent.xcodeproj \
+            -scheme iOSControlAgent \
+            -sdk iphoneos \
+            -configuration Release \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            ENABLE_BITCODE=NO \
+            build
+
+      - name: Package IPA (unsigned)
+        run: |
+          cd resources/ipa/iOSControlAgent
+          APP_PATH=$(find build -name "iOSControlAgent.app" -type d | head -1)
+          if [ -z "$APP_PATH" ]; then
+            echo "❌ iOSControlAgent.app not found"
+            exit 1
+          fi
+          mkdir -p Payload
+          cp -r "$APP_PATH" Payload/
+          zip -r iOSControlAgent.ipa Payload/
+          rm -rf Payload
+          echo "✅ IPA created: iOSControlAgent.ipa"
+          ls -lh iOSControlAgent.ipa
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: iOSControlAgent-unsigned
+          path: resources/ipa/iOSControlAgent/iOSControlAgent.ipa
+          retention-days: 30

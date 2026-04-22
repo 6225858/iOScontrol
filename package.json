@@ -1,0 +1,26 @@
+{
+  "name": "ios-control",
+  "version": "1.0.0",
+  "private": true,
+  "description": "iOS免越狱中控群控桌面应用",
+  "scripts": {
+    "dev": "pnpm --filter @ios-control/main dev",
+    "dev:renderer": "pnpm --filter @ios-control/renderer dev",
+    "dev:bridge": "pnpm --filter @ios-control/bridge dev",
+    "build": "pnpm --filter @ios-control/shared build && pnpm --filter @ios-control/bridge build && pnpm --filter @ios-control/renderer build && pnpm --filter @ios-control/main build",
+    "build:win": "pnpm build && pnpm --filter @ios-control/main build:win",
+    "build:mac": "pnpm build && pnpm --filter @ios-control/main build:mac",
+    "lint": "eslint packages/*/src --ext .ts,.vue",
+    "typecheck": "pnpm -r --parallel run typecheck"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@9.15.4",
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0",
+    "eslint": "^9.16.0"
+  }
+}

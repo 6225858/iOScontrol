@@ -1,0 +1,42 @@
+name: iOSControlAgent
+options:
+  bundleIdPrefix: com.ioscontrol
+  deploymentTarget:
+    iOS: "12.4"
+  xcodeVersion: "15.0"
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    ENABLE_BITCODE: NO
+    IPHONEOS_DEPLOYMENT_TARGET: "12.4"
+
+targets:
+  iOSControlAgent:
+    type: application
+    platform: iOS
+    sources:
+      - iOSControlAgent
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ioscontrol.agent
+        INFOPLIST_FILE: iOSControlAgent/Info.plist
+        CODE_SIGN_IDENTITY: ""
+        CODE_SIGNING_REQUIRED: NO
+        CODE_SIGNING_ALLOWED: NO
+        OTHER_LDFLAGS: ["-lsqlite3"]
+        FRAMEWORKS: ["XCTest.framework", "JavaScriptCore.framework", "UIKit.framework", "Foundation.framework"]
+    entitlements:
+      path: iOSControlAgent/iOSControlAgent.entitlements
+
+  iOSControlAgentTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - iOSControlAgentTests
+    dependencies:
+      - target: iOSControlAgent
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ioscontrol.agent.tests

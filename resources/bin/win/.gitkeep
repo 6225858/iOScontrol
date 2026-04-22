@@ -1,0 +1,12 @@
+# Windows libimobiledevice 工具链
+
+将以下工具放置在此目录:
+- idevice_id.exe
+- ideviceinfo.exe
+- idevicepair.exe
+- ideviceinstaller.exe
+- ideviceimagemounter.exe
+- idevicescreenshot.exe
+- idevicesyslog.exe
+- usbmuxd.exe
+及对应的 DLL 依赖文件

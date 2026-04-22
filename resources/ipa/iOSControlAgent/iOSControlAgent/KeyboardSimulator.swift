@@ -1,0 +1,62 @@
+//
+//  KeyboardSimulator.swift
+//  iOSControlAgent
+//
+//  键盘模拟 — 通过 WDA/XCTest 实现文字输入和按键操作
+//
+
+import Foundation
+import XCTest
+
+class KeyboardSimulator {
+
+    /// 输入文本
+    static func typeText(_ text: String) {
+        let app = XCUIApplication()
+        // 需要先确保有可输入的焦点元素
+        app.typeText(text)
+    }
+
+    /// 按下删除键
+    static func deleteKey(count: Int = 1) {
+        let app = XCUIApplication()
+        for _ in 0..<count {
+            app.keyboards.keys["delete"].tap()
+        }
+    }
+
+    /// 按 Return 键
+    static func returnKey() {
+        let app = XCUIApplication()
+        app.keyboards.keys["Return"].tap()
+    }
+
+    /// 按 Home 键 (iOS < 13) 或上滑手势 (iOS 13+)
+    static func home() {
+        XCUIDevice.shared.press(XCUIDevice.Button.home)
+    }
+
+    /// 音量加
+    static func volumeUp() {
+        XCUIDevice.shared.press(XCUIDevice.Button.volumeUp)
+    }
+
+    /// 音量减
+    static func volumeDown() {
+        XCUIDevice.shared.press(XCUIDevice.Button.volumeDown)
+    }
+
+    /// 锁屏
+    static func lockScreen() {
+        XCUIDevice.shared.press(XCUIDevice.Button.home)
+        // 短暂等待后再按一次实现锁屏
+        Thread.sleep(forTimeInterval: 0.1)
+        XCUIDevice.shared.press(XCUIDevice.Button.home)
+    }
+
+    /// 截屏键 (同时按 Home + Power)
+    static func screenshotKey() {
+        // 通过程序截图替代
+        _ = ScreenCapture.takeScreenshot()
+    }
+}

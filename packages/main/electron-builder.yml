@@ -1,0 +1,75 @@
+appId: com.ios-control.app
+productName: iOS-Control
+copyright: Copyright © 2024
+
+directories:
+  output: release
+  buildResources: resources
+
+files:
+  - dist/**/*
+  - node_modules/**/*
+  - "!node_modules/**/test/**"
+  - "!node_modules/**/*.md"
+  - "!node_modules/**/.github/**"
+
+extraResources:
+  - from: "../../resources/bin"
+    to: "bin"
+    filter:
+      - "**/*"
+  - from: "../../resources/DeveloperDiskImage"
+    to: "DeveloperDiskImage"
+    filter:
+      - "**/*.dmg"
+      - "**/*.signature"
+      - "**/*.plist"
+  - from: "../../resources/ipa"
+    to: "ipa"
+    filter:
+      - "**/*.ipa"
+  - from: "../../resources/ocr-models"
+    to: "ocr-models"
+    filter:
+      - "**/*"
+
+asar: true
+asarUnpack:
+  - "**/*.node"
+  - "**/*.dll"
+  - "**/*.dylib"
+  - "**/*.so"
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  icon: resources/icon.ico
+  requestedExecutionLevel: requireAdministrator
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  installerLanguages:
+    - zh-CN
+  language: 2052
+  shortcutName: iOS-Control
+
+mac:
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+  icon: resources/icon.icns
+  category: public.app-category.developer-tools
+  hardenedRuntime: true
+  gatekeeperAssess: false
+
+dmg:
+  title: "${productName} ${version}"
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: "/Applications"

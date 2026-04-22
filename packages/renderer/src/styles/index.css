@@ -1,0 +1,136 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #00B4D8;
+  --color-primary-hover: #26BFDB;
+  --color-bg: #0A0E1A;
+  --color-bg-secondary: #111827;
+  --color-bg-tertiary: #1F2937;
+  --color-text: #F9FAFB;
+  --color-text-secondary: #D1D5DB;
+  --color-text-muted: #9CA3AF;
+  --color-border: #374151;
+  --color-success: #10B981;
+  --color-danger: #EF4444;
+  --color-warning: #F59E0B;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #app {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: 'PingFang-SC', 'Microsoft YaHei', sans-serif;
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #374151;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4B5563;
+}
+
+/* 玻璃态效果 */
+.glass {
+  background: rgba(17, 24, 39, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(55, 65, 81, 0.5);
+}
+
+.glass-light {
+  background: rgba(31, 41, 55, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(55, 65, 81, 0.3);
+}
+
+/* 霓虹发光效果 */
+.neon-glow {
+  box-shadow: 0 0 10px rgba(0, 180, 216, 0.3), 0 0 20px rgba(0, 180, 216, 0.1);
+}
+
+.neon-text {
+  text-shadow: 0 0 10px rgba(0, 180, 216, 0.5);
+}
+
+/* 状态指示灯 */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot-online {
+  background: #10B981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+}
+
+.status-dot-offline {
+  background: #6B7280;
+}
+
+.status-dot-error {
+  background: #EF4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+}
+
+.status-dot-running {
+  background: #00B4D8;
+  box-shadow: 0 0 6px rgba(0, 180, 216, 0.6);
+}
+
+/* 覆盖 TDesign 暗色主题 */
+.t-layout {
+  background: var(--color-bg) !important;
+}
+
+.t-menu {
+  background: var(--color-bg-secondary) !important;
+}
+
+.t-table {
+  background: var(--color-bg-secondary) !important;
+}
+
+/* 投屏 Canvas 容器 */
+.screen-canvas-container {
+  position: relative;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.screen-canvas-container canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
