@@ -24,10 +24,18 @@ jobs:
       - name: Generate Xcode project
         run: |
           cd resources/ipa/iOSControlAgent
-          # 删除手写的 pbxproj，用 XcodeGen 重新生成
           rm -rf iOSControlAgent.xcodeproj
           xcodegen generate
           echo "✅ Xcode project generated"
+
+      - name: Fix project format for Xcode 15
+        run: |
+          cd resources/ipa/iOSControlAgent
+          PBXPROJ="iOSControlAgent.xcodeproj/project.pbxproj"
+          # XcodeGen 生成格式 77 (Xcode 16)，降级到 56 (Xcode 14+) 兼容 Xcode 15
+          sed -i '' 's/objectVersion = 77/objectVersion = 56/' "$PBXPROJ"
+          sed -i '' 's/compatibilityVersion = "Xcode 16.0"/compatibilityVersion = "Xcode 14.0"/' "$PBXPROJ"
+          echo "✅ Project format downgraded for Xcode 15"
 
       - name: Build
         run: |
