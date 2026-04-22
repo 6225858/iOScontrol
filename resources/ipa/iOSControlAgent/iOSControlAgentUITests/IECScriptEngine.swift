@@ -1,15 +1,13 @@
 //
 //  IECScriptEngine.swift
-//  iOSControlAgent
+//  iOSControlAgentUITests
 //
 //  IEC 脚本引擎 — 提供 EasyClick 兼容的自动化 API
 //
 
 import Foundation
 import UIKit
-#if canImport(JavaScriptCore)
 import JavaScriptCore
-#endif
 
 class IECScriptEngine {
 
@@ -22,7 +20,6 @@ class IECScriptEngine {
 
     /// 执行 IEC 脚本
     func execute(_ script: String) throws {
-        #if canImport(JavaScriptCore)
         let context = JSContext()
 
         injectIECAPI(into: context)
@@ -41,14 +38,10 @@ class IECScriptEngine {
         if let error = executionError {
             throw error
         }
-        #else
-        throw IECScriptError.unsupported("JavaScriptCore not available")
-        #endif
     }
 
     // MARK: - 注入 IEC API
 
-    #if canImport(JavaScriptCore)
     private func injectIECAPI(into context: JSContext?) {
         guard let context = context else { return }
 
@@ -187,7 +180,6 @@ class IECScriptEngine {
     private func ocrBlock() -> @convention(block) ([String: Any]?) -> [String: Any]? {
         return { _ in nil }
     }
-    #endif
 }
 
 // MARK: - 错误类型

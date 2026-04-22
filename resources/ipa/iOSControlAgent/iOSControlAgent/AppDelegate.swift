@@ -2,8 +2,8 @@
 //  AppDelegate.swift
 //  iOSControlAgent
 //
-//  宿主 App 入口 — 极简启动器
-//  仅负责显示启动界面，通过 XCTest Runner 运行实际逻辑
+//  宿主 App 入口 — XCUITest Runner 的 host app
+//  实际自动化逻辑在 iOSControlAgentUITests 中运行
 //
 
 import UIKit

@@ -1,6 +1,6 @@
 //
 //  Socket.swift
-//  iOSControlAgent
+//  iOSControlAgentUITests
 //
 //  轻量级 TCP Socket 封装 — 用于 HTTP 服务器
 //
@@ -17,7 +17,6 @@ class Socket {
             throw SocketError.creationFailed
         }
 
-        // 设置 SO_REUSEADDR
         var on: Int32 = 1
         setsockopt(socket.socketFileDescriptor, SOL_SOCKET, SO_REUSEADDR, &on, socklen_t(MemoryLayout<Int32>.size))
 

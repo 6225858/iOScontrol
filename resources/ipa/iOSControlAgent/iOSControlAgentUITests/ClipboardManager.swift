@@ -1,6 +1,6 @@
 //
 //  ClipboardManager.swift
-//  iOSControlAgent
+//  iOSControlAgentUITests
 //
 //  剪切板管理 — 读写系统剪切板
 //

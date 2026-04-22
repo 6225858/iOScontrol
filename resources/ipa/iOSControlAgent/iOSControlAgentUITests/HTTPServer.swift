@@ -1,6 +1,6 @@
 //
 //  HTTPServer.swift
-//  iOSControlAgent
+//  iOSControlAgentUITests
 //
 //  自定义代理 IPA 的 HTTP 服务端 — /ecnb/ 协议
 //
@@ -15,7 +15,7 @@ struct AgentRequest: Codable {
     let scriptName: String?
     let taskId: String?
     let params: [String: AnyCodable]?
-    let content: String?       // base64 编码的文件内容
+    let content: String?
     let fileName: String?
     let remotePath: String?
 }
@@ -34,7 +34,7 @@ struct AgentResponse: Codable {
     }
 }
 
-// MARK: - AnyCodable (支持任意 JSON 值)
+// MARK: - AnyCodable
 
 struct AnyCodable: Codable {
     let value: Any
@@ -83,7 +83,7 @@ struct AnyCodable: Codable {
 
 class HTTPServer {
     private var serverSocket: Socket?
-    private var isRunning = false
+    public var isRunning = false
     private let port: UInt16
     private let scriptEngine: ScriptEngine
     private let clipboardManager: ClipboardManager
@@ -107,7 +107,6 @@ class HTTPServer {
             isRunning = true
             print("[Agent] HTTP server listening on port \(port)")
 
-            // 在后台线程接受连接
             DispatchQueue.global(qos: .utility).async { [weak self] in
                 self?.acceptConnections()
             }
@@ -146,16 +145,11 @@ class HTTPServer {
         defer { socket.close() }
 
         do {
-            // 读取 HTTP 请求
             let requestData = try socket.read(maxLength: 65536)
             guard let requestStr = String(data: requestData, encoding: .utf8) else { return }
 
             let (method, path, headers, body) = parseHTTPRequest(requestStr)
-
-            // 路由分发
             let response = route(method: method, path: path, headers: headers, body: body)
-
-            // 发送响应
             let httpResponse = buildHTTPResponse(response)
             try socket.write(from: httpResponse)
 
@@ -168,7 +162,6 @@ class HTTPServer {
 
     private func route(method: String, path: String, headers: [String: String], body: Data?) -> AgentResponse {
         switch path {
-        // 健康检查
         case "/ecnb/ping":
             return AgentResponse.ok([
                 "status": "running",
@@ -177,7 +170,6 @@ class HTTPServer {
                 "uptime": Int(Date().timeIntervalSince1970),
             ])
 
-        // 脚本执行
         case "/ecnb/script/run":
             return handleScriptRun(body: body)
 
@@ -187,27 +179,85 @@ class HTTPServer {
         case "/ecnb/script/stop":
             return handleScriptStop(body: body)
 
-        // 剪切板
         case "/ecnb/clipboard/read":
             return handleClipboardRead(body: body)
 
         case "/ecnb/clipboard/write":
             return handleClipboardWrite(body: body)
 
-        // 文件传输
         case "/ecnb/file/upload":
             return handleFileUpload(body: body)
 
         case "/ecnb/file/download":
             return handleFileDownload(body: body)
 
-        // 设备信息
         case "/ecnb/device/info":
             return handleDeviceInfo()
+
+        case "/ecnb/touch/tap":
+            return handleTouchTap(body: body)
+
+        case "/ecnb/touch/longpress":
+            return handleTouchLongPress(body: body)
+
+        case "/ecnb/touch/swipe":
+            return handleTouchSwipe(body: body)
+
+        case "/ecnb/screenshot":
+            return handleScreenshot()
 
         default:
             return AgentResponse.fail("Unknown endpoint: \(path)", code: 404)
         }
+    }
+
+    // MARK: - 触控操作
+
+    private func handleTouchTap(body: Data?) -> AgentResponse {
+        guard let body = body,
+              let req = try? JSONDecoder().decode(AgentRequest.self, from: body),
+              let params = req.params else {
+            return AgentResponse.fail("Missing params")
+        }
+        let x = params["x"]?.value as? Double ?? 0
+        let y = params["y"]?.value as? Double ?? 0
+        TouchSimulator.tap(at: CGPoint(x: x, y: y))
+        return AgentResponse.ok()
+    }
+
+    private func handleTouchLongPress(body: Data?) -> AgentResponse {
+        guard let body = body,
+              let req = try? JSONDecoder().decode(AgentRequest.self, from: body),
+              let params = req.params else {
+            return AgentResponse.fail("Missing params")
+        }
+        let x = params["x"]?.value as? Double ?? 0
+        let y = params["y"]?.value as? Double ?? 0
+        let duration = params["duration"]?.value as? Double ?? 1.0
+        TouchSimulator.longPress(at: CGPoint(x: x, y: y), duration: duration)
+        return AgentResponse.ok()
+    }
+
+    private func handleTouchSwipe(body: Data?) -> AgentResponse {
+        guard let body = body,
+              let req = try? JSONDecoder().decode(AgentRequest.self, from: body),
+              let params = req.params else {
+            return AgentResponse.fail("Missing params")
+        }
+        let x1 = params["x1"]?.value as? Double ?? 0
+        let y1 = params["y1"]?.value as? Double ?? 0
+        let x2 = params["x2"]?.value as? Double ?? 0
+        let y2 = params["y2"]?.value as? Double ?? 0
+        let duration = params["duration"]?.value as? Double ?? 0.3
+        TouchSimulator.swipe(from: CGPoint(x: x1, y: y1), to: CGPoint(x: x2, y: y2), duration: duration)
+        return AgentResponse.ok()
+    }
+
+    private func handleScreenshot() -> AgentResponse {
+        if let base64 = ScreenCapture.takeScreenshotJPEG(quality: 0.5) {
+            return AgentResponse.ok(["image": base64])
+        }
+        return AgentResponse.fail("Screenshot failed")
     }
 
     // MARK: - 脚本执行

@@ -2,7 +2,7 @@ name: iOSControlAgent
 options:
   bundleIdPrefix: com.ioscontrol
   deploymentTarget:
-    iOS: "12.4"
+    iOS: "12.0"
   xcodeVersion: "15.0"
   generateEmptyDirectories: true
   groupSortPosition: top
@@ -11,11 +11,12 @@ settings:
   base:
     SWIFT_VERSION: "5.0"
     ENABLE_BITCODE: NO
-    IPHONEOS_DEPLOYMENT_TARGET: "12.4"
+    IPHONEOS_DEPLOYMENT_TARGET: "12.0"
     GCC_WARN_ABOUT_RETURN_TYPE: YES_ERROR
     GCC_WARN_UNINITIALIZED_AUTOS: YES_AGGRESSIVE
 
 targets:
+  # 宿主 App — 极简启动器
   iOSControlAgent:
     type: application
     platform: iOS
@@ -23,6 +24,16 @@ targets:
       - path: iOSControlAgent
         excludes:
           - "**/.DS_Store"
+          - "TouchSimulator.swift"
+          - "KeyboardSimulator.swift"
+          - "ScreenCapture.swift"
+          - "HTTPServer.swift"
+          - "Socket.swift"
+          - "ScriptEngine.swift"
+          - "IECScriptEngine.swift"
+          - "ClipboardManager.swift"
+          - "FileTransferManager.swift"
+          - "DeviceInfoCollector.swift"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ioscontrol.agent
@@ -36,10 +47,6 @@ targets:
           - "@executable_path/Frameworks"
         TARGETED_DEVICE_FAMILY: "1,2"
         SWIFT_EMIT_LOC_STRINGS: YES
-        OTHER_LDFLAGS:
-          - "-lsqlite3"
-          - "-framework"
-          - "JavaScriptCore"
       configs:
         Debug:
           SWIFT_OPTIMIZATION_LEVEL: "-Onone"
@@ -50,3 +57,35 @@ targets:
       properties:
         com.apple.security.network.server: true
         com.apple.security.network.client: true
+    # 依赖 UITest bundle
+    dependencies:
+      - target: iOSControlAgentUITests
+
+  # UI Test bundle — 包含所有自动化逻辑
+  iOSControlAgentUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: iOSControlAgentUITests
+        excludes:
+          - "**/.DS_Store"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ioscontrol.agent.uitests
+        INFOPLIST_FILE: iOSControlAgentUITests/Info.plist
+        CODE_SIGN_IDENTITY: ""
+        CODE_SIGNING_REQUIRED: NO
+        CODE_SIGNING_ALLOWED: NO
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SWIFT_EMIT_LOC_STRINGS: YES
+        OTHER_LDFLAGS:
+          - "-lsqlite3"
+          - "-framework"
+          - "JavaScriptCore"
+          - "-framework"
+          - "XCTest"
+      configs:
+        Debug:
+          SWIFT_OPTIMIZATION_LEVEL: "-Onone"
+        Release:
+          SWIFT_OPTIMIZATION_LEVEL: "-O"

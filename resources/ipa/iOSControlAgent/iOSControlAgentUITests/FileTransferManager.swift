@@ -1,6 +1,6 @@
 //
 //  FileTransferManager.swift
-//  iOSControlAgent
+//  iOSControlAgentUITests
 //
 //  文件传输管理 — 管理设备端文件的上传/下载
 //
@@ -16,11 +16,9 @@ class FileTransferManager {
             return false
         }
 
-        // 确定写入路径
         let writePath = resolveRemotePath(remotePath, fileName: fileName)
 
         do {
-            // 确保目录存在
             let directory = writePath.deletingLastPathComponent()
             if !FileManager.default.fileExists(atPath: directory.path) {
                 try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -91,13 +89,8 @@ class FileTransferManager {
 
     // MARK: - 路径解析
 
-    /// 将远程路径解析为本地 URL
-    /// - Documents 目录: "documents/file.txt"
-    /// - 临时目录: "tmp/file.txt"
-    /// - 绝对路径: "/var/mobile/..."
     private func resolveRemotePath(_ remotePath: String, fileName: String? = nil) -> URL {
         if remotePath.hasPrefix("/") {
-            // 绝对路径
             var url = URL(fileURLWithPath: remotePath)
             if let fileName = fileName {
                 url = url.appendingPathComponent(fileName)
@@ -105,7 +98,6 @@ class FileTransferManager {
             return url
         }
 
-        // 相对路径 — 基于 Documents 目录
         let documentsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         var url = documentsDir.appendingPathComponent(remotePath)
         if let fileName = fileName {

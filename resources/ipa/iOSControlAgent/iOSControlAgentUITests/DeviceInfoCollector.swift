@@ -1,6 +1,6 @@
 //
 //  DeviceInfoCollector.swift
-//  iOSControlAgent
+//  iOSControlAgentUITests
 //
 //  设备信息收集 — 收集设备硬件/系统/网络信息
 //
@@ -50,8 +50,6 @@ class DeviceInfoCollector {
     // MARK: - UDID
 
     private static func getUDID() -> String {
-        // 在 App 沙箱内无法直接获取 UDID
-        // 使用 identifierForVendor 或 Keychain 持久化标识
         return UIDevice.current.identifierForVendor?.uuidString ?? "unknown"
     }
 

@@ -18,7 +18,6 @@ class ViewController: UIViewController {
 
         view.backgroundColor = .white
 
-        // 标题
         let titleLabel = UILabel()
         titleLabel.text = "iOSControl Agent"
         titleLabel.font = UIFont.boldSystemFont(ofSize: 24)
@@ -26,16 +25,14 @@ class ViewController: UIViewController {
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(titleLabel)
 
-        // 状态标签
         statusLabel = UILabel()
-        statusLabel.text = "● 运行中"
+        statusLabel.text = "● 等待连接"
         statusLabel.font = UIFont.systemFont(ofSize: 18)
         statusLabel.textColor = .green
         statusLabel.textAlignment = .center
         statusLabel.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(statusLabel)
 
-        // 端口标签
         portLabel = UILabel()
         portLabel.text = "端口: 19402"
         portLabel.font = UIFont.systemFont(ofSize: 16)
@@ -44,7 +41,6 @@ class ViewController: UIViewController {
         portLabel.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(portLabel)
 
-        // 版本标签
         versionLabel = UILabel()
         versionLabel.text = "v1.0.0"
         versionLabel.font = UIFont.systemFont(ofSize: 14)
@@ -53,7 +49,6 @@ class ViewController: UIViewController {
         versionLabel.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(versionLabel)
 
-        // 布局
         NSLayoutConstraint.activate([
             titleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             titleLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -60),

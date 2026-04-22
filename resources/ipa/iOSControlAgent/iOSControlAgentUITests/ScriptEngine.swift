@@ -1,14 +1,12 @@
 //
 //  ScriptEngine.swift
-//  iOSControlAgent
+//  iOSControlAgentUITests
 //
 //  脚本执行引擎 — 管理脚本任务的创建、执行、状态追踪
 //
 
 import Foundation
-#if canImport(JavaScriptCore)
 import JavaScriptCore
-#endif
 
 // MARK: - 脚本任务状态
 
@@ -149,7 +147,6 @@ class ScriptEngine {
     // MARK: - JavaScript 执行
 
     private func executeJavaScript(taskId: String, script: String, params: [String: AnyCodable]?) {
-        #if canImport(JavaScriptCore)
         appendLog(taskId, "[\(timestamp())] 执行 JavaScript 脚本")
 
         let jsContext = JSContext()
@@ -169,14 +166,6 @@ class ScriptEngine {
         jsContext?.evaluateScript(script)
 
         appendLog(taskId, "[\(timestamp())] JavaScript 脚本执行完成")
-        #else
-        appendLog(taskId, "[\(timestamp())] JavaScriptCore 不可用，无法执行脚本")
-        updateTask(taskId) { task in
-            task.status = .failed
-            task.error = "JavaScriptCore not available"
-            task.completedAt = Date()
-        }
-        #endif
     }
 
     // MARK: - Lua 执行 (预留)
@@ -192,7 +181,6 @@ class ScriptEngine {
 
     // MARK: - 注入自动化 API
 
-    #if canImport(JavaScriptCore)
     private func injectAutomationAPI(into context: JSContext?, taskId: String) {
         guard let context = context else { return }
 
@@ -224,7 +212,7 @@ class ScriptEngine {
         // input(text)
         let inputBlock: @convention(block) (String) -> Void = { text in
             KeyboardSimulator.typeText(text)
-            self.appendLog(taskId, "[\(self.timestamp())] input(\(text.prefix(20))...)")
+            self.appendLog(taskId, "[\(self.timestamp())] input(\(text.prefix(20))...")")
         }
         context.setObject(inputBlock, forKeyedSubscript: "input" as NSString)
 
@@ -250,7 +238,6 @@ class ScriptEngine {
         }
         context.setObject(logBlock, forKeyedSubscript: "log" as NSString)
     }
-    #endif
 
     // MARK: - 辅助
 
