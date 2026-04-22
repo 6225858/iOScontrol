@@ -23,16 +23,6 @@ targets:
       - path: iOSControlAgent
         excludes:
           - "**/.DS_Store"
-          - "TouchSimulator.swift"
-          - "KeyboardSimulator.swift"
-          - "ScreenCapture.swift"
-          - "HTTPServer.swift"
-          - "Socket.swift"
-          - "ScriptEngine.swift"
-          - "IECScriptEngine.swift"
-          - "ClipboardManager.swift"
-          - "FileTransferManager.swift"
-          - "DeviceInfoCollector.swift"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ioscontrol.agent
@@ -46,6 +36,10 @@ targets:
           - "@executable_path/Frameworks"
         TARGETED_DEVICE_FAMILY: "1,2"
         SWIFT_EMIT_LOC_STRINGS: YES
+        OTHER_LDFLAGS:
+          - "-lsqlite3"
+          - "-framework"
+          - "JavaScriptCore"
       configs:
         Debug:
           SWIFT_OPTIMIZATION_LEVEL: "-Onone"
@@ -56,31 +50,3 @@ targets:
       properties:
         com.apple.security.network.server: true
         com.apple.security.network.client: true
-
-  iOSControlAgentTests:
-    type: bundle.unit-test
-    platform: iOS
-    sources:
-      - path: iOSControlAgentTests
-        excludes:
-          - "**/.DS_Store"
-      - path: iOSControlAgent
-        excludes:
-          - "**/.DS_Store"
-          - "AppDelegate.swift"
-          - "ViewController.swift"
-          - "Info.plist"
-          - "iOSControlAgent-Bridging-Header.h"
-          - "iOSControlAgent.entitlements"
-    dependencies:
-      - target: iOSControlAgent
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.ioscontrol.agent.tests
-        INFOPLIST_FILE: iOSControlAgentTests/Info.plist
-        CODE_SIGN_IDENTITY: ""
-        CODE_SIGNING_REQUIRED: NO
-        CODE_SIGNING_ALLOWED: NO
-        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/iOSControlAgent.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/iOSControlAgent"
-        BUNDLE_LOADER: "$(TEST_HOST)"
-        TARGETED_DEVICE_FAMILY: "1,2"

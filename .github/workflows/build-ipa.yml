@@ -34,7 +34,7 @@ jobs:
           sed -i '' 's/compatibilityVersion = "Xcode 16.0"/compatibilityVersion = "Xcode 14.0"/' "$PBXPROJ"
           echo "✅ Project format downgraded for Xcode 15"
 
-      - name: Build App Target
+      - name: Build
         run: |
           cd resources/ipa/iOSControlAgent
           xcodebuild \
@@ -47,31 +47,16 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             ENABLE_BITCODE=NO \
-            build 2>&1 | tee build-app.log
-
-      - name: Build Test Bundle
-        run: |
-          cd resources/ipa/iOSControlAgent
-          xcodebuild \
-            -project iOSControlAgent.xcodeproj \
-            -scheme iOSControlAgentTests \
-            -sdk iphoneos \
-            -configuration Release \
-            -derivedDataPath build \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            ENABLE_BITCODE=NO \
-            build 2>&1 | tee build-tests.log
+            build 2>&1 | tee build.log
 
       - name: Check build result
         run: |
           cd resources/ipa/iOSControlAgent
-          if grep -q "BUILD SUCCEEDED" build-tests.log; then
+          if grep -q "BUILD SUCCEEDED" build.log; then
             echo "✅ Build succeeded"
           else
-            echo "❌ Build failed"
-            tail -80 build-tests.log
+            echo "❌ Build failed — showing errors"
+            grep -E "error:" build.log || tail -80 build.log
             exit 1
           fi
 
@@ -84,15 +69,6 @@ jobs:
             find build -name "*.app" -type d
             exit 1
           fi
-
-          # 将 .xctest bundle 嵌入 App 的 Plugins 目录
-          TEST_PATH=$(find build -name "iOSControlAgentTests.xctest" -type d | head -1)
-          if [ -n "$TEST_PATH" ]; then
-            mkdir -p "$APP_PATH/PlugIns"
-            cp -r "$TEST_PATH" "$APP_PATH/PlugIns/"
-            echo "✅ Test bundle embedded in PlugIns/"
-          fi
-
           echo "Found app: $APP_PATH"
           mkdir -p Payload
           cp -r "$APP_PATH" Payload/
