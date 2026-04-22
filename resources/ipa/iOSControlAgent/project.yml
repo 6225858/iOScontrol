@@ -16,8 +16,8 @@ settings:
     GCC_WARN_UNINITIALIZED_AUTOS: YES_AGGRESSIVE
 
 targets:
-  # XCTest Runner App — 宿主 App 同时也是测试运行器
-  # bundleId 以 .xctrunner 结尾，这样 go-ios/tidevice 可以识别为 XCUITest Runner
+  # 宿主 App — 纯 UI 壳，不导入 XCTest
+  # bundleId 以 .xctrunner 结尾，go-ios/tidevice 识别为 XCUITest Runner
   iOSControlAgent:
     type: application
     platform: iOS
@@ -25,12 +25,6 @@ targets:
       - path: iOSControlAgent
         excludes:
           - "**/.DS_Store"
-      - path: iOSControlAgentUITests
-        excludes:
-          - "**/.DS_Store"
-          - "Info.plist"
-          - "iOSControlAgentUITests-Bridging-Header.h"
-          - "AgentUITests.swift"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ioscontrol.agent.xctrunner
@@ -44,12 +38,6 @@ targets:
           - "@executable_path/Frameworks"
         TARGETED_DEVICE_FAMILY: "1,2"
         SWIFT_EMIT_LOC_STRINGS: YES
-        OTHER_LDFLAGS:
-          - "-lsqlite3"
-          - "-framework"
-          - "JavaScriptCore"
-          - "-framework"
-          - "XCTest"
         ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES: YES
       configs:
         Debug:
@@ -64,7 +52,8 @@ targets:
     dependencies:
       - target: iOSControlAgentUITests
 
-  # UI Test bundle — 嵌入 App 的 PlugIns 目录
+  # UI Test bundle — 包含所有自动化代码，嵌入 App 的 PlugIns 目录
+  # 通过 go-ios runwda 启动，在 XCTest 运行时中获得触控/键盘模拟权限
   iOSControlAgentUITests:
     type: bundle.ui-testing
     platform: iOS
@@ -72,16 +61,6 @@ targets:
       - path: iOSControlAgentUITests
         excludes:
           - "**/.DS_Store"
-          - "TouchSimulator.swift"
-          - "KeyboardSimulator.swift"
-          - "ScreenCapture.swift"
-          - "HTTPServer.swift"
-          - "Socket.swift"
-          - "ScriptEngine.swift"
-          - "IECScriptEngine.swift"
-          - "ClipboardManager.swift"
-          - "FileTransferManager.swift"
-          - "DeviceInfoCollector.swift"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ioscontrol.agent.uitests
@@ -91,6 +70,10 @@ targets:
         CODE_SIGNING_ALLOWED: NO
         TARGETED_DEVICE_FAMILY: "1,2"
         SWIFT_EMIT_LOC_STRINGS: YES
+        OTHER_LDFLAGS:
+          - "-lsqlite3"
+          - "-framework"
+          - "JavaScriptCore"
       configs:
         Debug:
           SWIFT_OPTIMIZATION_LEVEL: "-Onone"

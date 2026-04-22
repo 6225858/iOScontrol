@@ -2,18 +2,17 @@
 //  AppDelegate.swift
 //  iOSControlAgent
 //
-//  XCTest Runner App 入口 — 直接启动 HTTP 代理服务
-//  通过 go-ios/tidevice 以 XCUITest 模式启动
+//  宿主 App 入口 — 纯 UI 壳，不导入 XCTest
+//  HTTP 服务器和自动化功能由 XCUITest bundle 中的 AgentUITests 启动
+//  通过 go-ios runwda 命令以 XCUITest 模式运行
 //
 
 import UIKit
-import XCTest
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
-    private var httpServer: HTTPServer?
 
     func application(
         _ application: UIApplication,
@@ -25,10 +24,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         let viewController = ViewController()
         window?.rootViewController = viewController
         window?.makeKeyAndVisible()
-
-        // 启动 HTTP 代理服务
-        httpServer = HTTPServer(port: 19402)
-        httpServer?.start()
 
         return true
     }

@@ -206,6 +206,24 @@ class HTTPServer {
         case "/ecnb/screenshot":
             return handleScreenshot()
 
+        case "/ecnb/keyboard/type":
+            return handleKeyboardType(body: body)
+
+        case "/ecnb/keyboard/delete":
+            return handleKeyboardDelete(body: body)
+
+        case "/ecnb/keyboard/home":
+            KeyboardSimulator.home()
+            return AgentResponse.ok()
+
+        case "/ecnb/keyboard/volumeUp":
+            KeyboardSimulator.volumeUp()
+            return AgentResponse.ok()
+
+        case "/ecnb/keyboard/volumeDown":
+            KeyboardSimulator.volumeDown()
+            return AgentResponse.ok()
+
         default:
             return AgentResponse.fail("Unknown endpoint: \(path)", code: 404)
         }
@@ -350,6 +368,28 @@ class HTTPServer {
     private func handleDeviceInfo() -> AgentResponse {
         let info = DeviceInfoCollector.collect()
         return AgentResponse.ok(info)
+    }
+
+    // MARK: - 键盘操作
+
+    private func handleKeyboardType(body: Data?) -> AgentResponse {
+        guard let body = body,
+              let req = try? JSONDecoder().decode(AgentRequest.self, from: body),
+              let content = req.content else {
+            return AgentResponse.fail("Missing content")
+        }
+        KeyboardSimulator.typeText(content)
+        return AgentResponse.ok()
+    }
+
+    private func handleKeyboardDelete(body: Data?) -> AgentResponse {
+        guard let body = body,
+              let req = try? JSONDecoder().decode(AgentRequest.self, from: body) else {
+            return AgentResponse.fail("Invalid request")
+        }
+        let count = req.params?["count"]?.value as? Int ?? 1
+        KeyboardSimulator.deleteKey(count: count)
+        return AgentResponse.ok()
     }
 
     // MARK: - HTTP 解析/构建
