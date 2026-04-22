@@ -34,11 +34,6 @@ jobs:
           sed -i '' 's/compatibilityVersion = "Xcode 16.0"/compatibilityVersion = "Xcode 14.0"/' "$PBXPROJ"
           echo "✅ Project format downgraded for Xcode 15"
 
-      - name: List schemes
-        run: |
-          cd resources/ipa/iOSControlAgent
-          xcodebuild -project iOSControlAgent.xcodeproj -list
-
       - name: Build App
         run: |
           cd resources/ipa/iOSControlAgent
@@ -74,8 +69,6 @@ jobs:
           find build -name "*.xctest" -type d
           echo "=== Frameworks ==="
           find build -name "*.framework" -type d
-          echo "=== Dylibs ==="
-          find build -name "*.dylib" -type f
 
       - name: Package IPA (unsigned)
         run: |
@@ -93,14 +86,8 @@ jobs:
           ls -la "$APP_PATH/"
           echo "=== PlugIns ==="
           ls -laR "$APP_PATH/PlugIns/" 2>/dev/null || echo "No PlugIns directory"
-
-          # 拷贝 XCTestSwiftSupport dylib（如果存在）
-          XCT_DYLIB=$(find build -name "libXCTestSwiftSupport.dylib" -type f | head -1)
-          if [ -n "$XCT_DYLIB" ]; then
-            echo "Found XCTestSwiftSupport: $XCT_DYLIB"
-            mkdir -p "$APP_PATH/Frameworks"
-            cp "$XCT_DYLIB" "$APP_PATH/Frameworks/"
-          fi
+          echo "=== Frameworks ==="
+          ls -la "$APP_PATH/Frameworks/" 2>/dev/null || echo "No Frameworks directory"
 
           # 创建 IPA
           mkdir -p Payload
@@ -109,10 +96,6 @@ jobs:
           rm -rf Payload
           echo "✅ IPA created: iOSControlAgent.ipa"
           ls -lh iOSControlAgent.ipa
-
-          # 列出 IPA 内容
-          echo "=== IPA contents ==="
-          unzip -l iOSControlAgent.ipa
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4

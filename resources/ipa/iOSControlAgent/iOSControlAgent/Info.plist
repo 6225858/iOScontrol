@@ -9,7 +9,7 @@
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.ioscontrol.agent</string>
+	<string>com.ioscontrol.agent.xctrunner</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -22,8 +22,6 @@
 	<string>1</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>UILaunchStoryboardName</key>
-	<string>LaunchScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>armv7</string>
@@ -40,7 +38,7 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>iOSControl Agent 需要本地网络权限以提供自动化控制服务</string>
+	<string>Access is necessary for automated testing.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
@@ -50,6 +48,43 @@
 	<array>
 		<string>fetch</string>
 		<string>processing</string>
+		<string>continuous</string>
 	</array>
+	<key>NFCReaderUsageDescription</key>
+	<string>Access is necessary for automated testing.</string>
+	<key>NSAppleMusicUsageDescription</key>
+	<string>Access is necessary for automated testing.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Access is necessary for automated testing.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Access is necessary for automated testing.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Access is necessary for automated testing.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Access is necessary for automated testing.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Access is necessary for automated testing.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Access is necessary for automated testing.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Access is necessary for automated testing.</string>
+	<key>NSHomeKitUsageDescription</key>
+	<string>Access is necessary for automated testing.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Access is necessary for automated testing.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Access is necessary for automated testing.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Access is necessary for automated testing.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>Access is necessary for automated testing.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Access is necessary for automated testing.</string>
+	<key>NSRemindersUsageDescription</key>
+	<string>Access is necessary for automated testing.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Access is necessary for automated testing.</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>Access is necessary for automated testing.</string>
 </dict>
 </plist>

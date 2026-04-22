@@ -16,12 +16,60 @@ settings:
     GCC_WARN_UNINITIALIZED_AUTOS: YES_AGGRESSIVE
 
 targets:
-  # 宿主 App — 极简启动器
+  # XCTest Runner App — 宿主 App 同时也是测试运行器
+  # bundleId 以 .xctrunner 结尾，这样 go-ios/tidevice 可以识别为 XCUITest Runner
   iOSControlAgent:
     type: application
     platform: iOS
     sources:
       - path: iOSControlAgent
+        excludes:
+          - "**/.DS_Store"
+      - path: iOSControlAgentUITests
+        excludes:
+          - "**/.DS_Store"
+          - "Info.plist"
+          - "iOSControlAgentUITests-Bridging-Header.h"
+          - "AgentUITests.swift"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ioscontrol.agent.xctrunner
+        INFOPLIST_FILE: iOSControlAgent/Info.plist
+        CODE_SIGN_IDENTITY: ""
+        CODE_SIGNING_REQUIRED: NO
+        CODE_SIGNING_ALLOWED: NO
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        LD_RUNPATH_SEARCH_PATHS:
+          - "$(inherited)"
+          - "@executable_path/Frameworks"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SWIFT_EMIT_LOC_STRINGS: YES
+        OTHER_LDFLAGS:
+          - "-lsqlite3"
+          - "-framework"
+          - "JavaScriptCore"
+          - "-framework"
+          - "XCTest"
+        ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES: YES
+      configs:
+        Debug:
+          SWIFT_OPTIMIZATION_LEVEL: "-Onone"
+        Release:
+          SWIFT_OPTIMIZATION_LEVEL: "-O"
+    entitlements:
+      path: iOSControlAgent/iOSControlAgent.entitlements
+      properties:
+        com.apple.security.network.server: true
+        com.apple.security.network.client: true
+    dependencies:
+      - target: iOSControlAgentUITests
+
+  # UI Test bundle — 嵌入 App 的 PlugIns 目录
+  iOSControlAgentUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: iOSControlAgentUITests
         excludes:
           - "**/.DS_Store"
           - "TouchSimulator.swift"
@@ -36,41 +84,6 @@ targets:
           - "DeviceInfoCollector.swift"
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.ioscontrol.agent
-        INFOPLIST_FILE: iOSControlAgent/Info.plist
-        CODE_SIGN_IDENTITY: ""
-        CODE_SIGNING_REQUIRED: NO
-        CODE_SIGNING_ALLOWED: NO
-        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        LD_RUNPATH_SEARCH_PATHS:
-          - "$(inherited)"
-          - "@executable_path/Frameworks"
-        TARGETED_DEVICE_FAMILY: "1,2"
-        SWIFT_EMIT_LOC_STRINGS: YES
-      configs:
-        Debug:
-          SWIFT_OPTIMIZATION_LEVEL: "-Onone"
-        Release:
-          SWIFT_OPTIMIZATION_LEVEL: "-O"
-    entitlements:
-      path: iOSControlAgent/iOSControlAgent.entitlements
-      properties:
-        com.apple.security.network.server: true
-        com.apple.security.network.client: true
-    # 依赖 UITest bundle
-    dependencies:
-      - target: iOSControlAgentUITests
-
-  # UI Test bundle — 包含所有自动化逻辑
-  iOSControlAgentUITests:
-    type: bundle.ui-testing
-    platform: iOS
-    sources:
-      - path: iOSControlAgentUITests
-        excludes:
-          - "**/.DS_Store"
-    settings:
-      base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ioscontrol.agent.uitests
         INFOPLIST_FILE: iOSControlAgentUITests/Info.plist
         CODE_SIGN_IDENTITY: ""
@@ -78,12 +91,6 @@ targets:
         CODE_SIGNING_ALLOWED: NO
         TARGETED_DEVICE_FAMILY: "1,2"
         SWIFT_EMIT_LOC_STRINGS: YES
-        OTHER_LDFLAGS:
-          - "-lsqlite3"
-          - "-framework"
-          - "JavaScriptCore"
-          - "-framework"
-          - "XCTest"
       configs:
         Debug:
           SWIFT_OPTIMIZATION_LEVEL: "-Onone"
