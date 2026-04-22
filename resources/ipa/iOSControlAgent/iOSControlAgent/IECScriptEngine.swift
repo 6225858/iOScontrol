@@ -32,7 +32,7 @@ class IECScriptEngine {
         }
 
         var executionError: Error?
-        context?.exceptionHandler = { _: JSContext?, exception: JSValue? in
+        context?.exceptionHandler = { (_: JSContext?, exception: JSValue?) in
             executionError = IECScriptError.runtime(exception?.toString() ?? "unknown error")
         }
 

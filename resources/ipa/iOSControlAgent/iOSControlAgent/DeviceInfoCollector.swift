@@ -32,7 +32,7 @@ class DeviceInfoCollector {
             "memory": ProcessInfo.processInfo.physicalMemory,
             "processorCount": ProcessInfo.processInfo.processorCount,
             "timezone": TimeZone.current.identifier,
-            "language": Locale.current.language.languageCode?.identifier ?? "",
+            "language": languageCode,
             "isJailbroken": isJailbroken(),
             "agentVersion": "1.0.0",
             "agentPort": 19402,

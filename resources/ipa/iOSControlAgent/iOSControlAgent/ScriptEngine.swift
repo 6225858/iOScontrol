@@ -162,7 +162,7 @@ class ScriptEngine {
             }
         }
 
-        jsContext?.exceptionHandler = { context: JSContext?, exception: JSValue? in
+        jsContext?.exceptionHandler = { (_: JSContext?, exception: JSValue?) in
             self.appendLog(taskId, "[\(self.timestamp())] JS Error: \(exception?.toString() ?? "unknown")")
         }
 
