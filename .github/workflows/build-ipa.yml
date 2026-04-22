@@ -34,7 +34,7 @@ jobs:
           sed -i '' 's/compatibilityVersion = "Xcode 16.0"/compatibilityVersion = "Xcode 14.0"/' "$PBXPROJ"
           echo "✅ Project format downgraded for Xcode 15"
 
-      - name: Build App
+      - name: Build App + Test Bundle (build-for-testing)
         run: |
           cd resources/ipa/iOSControlAgent
           xcodebuild \
@@ -47,7 +47,7 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             ENABLE_BITCODE=NO \
-            build 2>&1 | tee build.log
+            build-for-testing 2>&1 | tee build.log
 
       - name: Check build result
         run: |
@@ -73,7 +73,8 @@ jobs:
       - name: Package IPA (unsigned)
         run: |
           cd resources/ipa/iOSControlAgent
-          APP_PATH=$(find build -name "iOSControlAgent.app" -type d | head -1)
+          # build-for-testing 产物在 Build/Products/Release-iphoneos/ 下
+          APP_PATH=$(find build/Build/Products -name "iOSControlAgent.app" -type d | head -1)
           if [ -z "$APP_PATH" ]; then
             echo "❌ iOSControlAgent.app not found"
             find build -name "*.app" -type d
@@ -88,6 +89,13 @@ jobs:
           ls -laR "$APP_PATH/PlugIns/" 2>/dev/null || echo "No PlugIns directory"
           echo "=== Frameworks ==="
           ls -la "$APP_PATH/Frameworks/" 2>/dev/null || echo "No Frameworks directory"
+          echo "=== xctest bundle details ==="
+          find "$APP_PATH/PlugIns" -type f 2>/dev/null || echo "No PlugIns files"
+
+          # 移除签名（避免安装问题）
+          find "$APP_PATH" -name "_CodeSignature" -type d -exec rm -rf {} + 2>/dev/null || true
+          find "$APP_PATH" -name "CodeResources" -type f -delete 2>/dev/null || true
+          find "$APP_PATH" -name "embedded.mobileprovision" -type f -delete 2>/dev/null || true
 
           # 创建 IPA
           mkdir -p Payload

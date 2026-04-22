@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>__xctestrun_metadata__</key>
+	<dict>
+		<key>FormatVersion</key>
+		<integer>1</integer>
+	</dict>
+	<key>iOSControlAgentUITests</key>
+	<dict>
+		<key>BlueprintName</key>
+		<string>iOSControlAgentUITests</string>
+		<key>TestHostBundleIdentifier</key>
+		<string>com.ioscontrol.agent.xctrunner</string>
+		<key>TestHostPath</key>
+		<string>__TESTHOST__/iOSControlAgent.app</string>
+		<key>TestBundlePath</key>
+		<string>__TESTHOST__/iOSControlAgent.app/PlugIns/iOSControlAgentUITests.xctest</string>
+		<key>UITargetAppPath</key>
+		<string>__TESTHOST__/iOSControlAgent.app</string>
+		<key>TestingEnvironmentVariables</key>
+		<dict>
+			<key>DYLD_FRAMEWORK_PATH</key>
+			<string>__TESTHOST__/iOSControlAgent.app/Frameworks:__PLATFORMS__/iPhoneOS.platform/Developer/Library/Frameworks</string>
+			<key>DYLD_LIBRARY_PATH</key>
+			<string>__TESTHOST__/iOSControlAgent.app/Frameworks:__PLATFORMS__/iPhoneOS.platform/Developer/usr/lib</string>
+		</dict>
+	</dict>
+</dict>
+</plist>
