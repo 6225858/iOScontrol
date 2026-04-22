@@ -6,15 +6,27 @@
 //
 
 import Foundation
-import XCTest
 import UIKit
 
 class ScreenCapture {
 
     /// 截取当前屏幕
     static func takeScreenshot() -> UIImage? {
+        #if canImport(XCTest)
         let screenshot = XCUIScreen.main.screenshot()
         return screenshot.image
+        #else
+        // 非 XCTest 环境：使用 UIGraphics 渲染
+        DispatchQueue.main.sync {
+            guard let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) else { return }
+            UIGraphicsBeginImageContextWithOptions(window.bounds.size, false, window.screen.scale)
+            window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
+            let image = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+            return image
+        }
+        return nil
+        #endif
     }
 
     /// 截取屏幕并返回 PNG base64
@@ -51,3 +63,7 @@ class ScreenCapture {
         return UIImage(cgImage: cgImage, scale: scale, orientation: fullImage.imageOrientation)
     }
 }
+
+#if canImport(XCTest)
+import XCTest
+#endif

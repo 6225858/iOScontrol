@@ -23,6 +23,16 @@ targets:
       - path: iOSControlAgent
         excludes:
           - "**/.DS_Store"
+          - "TouchSimulator.swift"
+          - "KeyboardSimulator.swift"
+          - "ScreenCapture.swift"
+          - "HTTPServer.swift"
+          - "Socket.swift"
+          - "ScriptEngine.swift"
+          - "IECScriptEngine.swift"
+          - "ClipboardManager.swift"
+          - "FileTransferManager.swift"
+          - "DeviceInfoCollector.swift"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ioscontrol.agent
@@ -34,8 +44,6 @@ targets:
         LD_RUNPATH_SEARCH_PATHS:
           - "$(inherited)"
           - "@executable_path/Frameworks"
-        OTHER_LDFLAGS:
-          - "-lsqlite3"
         TARGETED_DEVICE_FAMILY: "1,2"
         SWIFT_EMIT_LOC_STRINGS: YES
       configs:
@@ -56,6 +64,14 @@ targets:
       - path: iOSControlAgentTests
         excludes:
           - "**/.DS_Store"
+      - path: iOSControlAgent
+        excludes:
+          - "**/.DS_Store"
+          - "AppDelegate.swift"
+          - "ViewController.swift"
+          - "Info.plist"
+          - "iOSControlAgent-Bridging-Header.h"
+          - "iOSControlAgent.entitlements"
     dependencies:
       - target: iOSControlAgent
     settings:
