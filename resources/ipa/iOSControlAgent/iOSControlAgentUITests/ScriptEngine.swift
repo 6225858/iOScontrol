@@ -212,7 +212,7 @@ class ScriptEngine {
         // input(text)
         let inputBlock: @convention(block) (String) -> Void = { text in
             KeyboardSimulator.typeText(text)
-            self.appendLog(taskId, "[\(self.timestamp())] input(\(text.prefix(20))...")")
+            self.appendLog(taskId, "[\(self.timestamp())] input(\(text.prefix(20)))")
         }
         context.setObject(inputBlock, forKeyedSubscript: "input" as NSString)
 

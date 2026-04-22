@@ -14,22 +14,27 @@ class TouchSimulator {
 
     /// 单击
     static func tap(at point: CGPoint) {
-        performTouch(at: point, type: .tap)
+        let coordinate = normalizedCoordinate(for: point)
+        coordinate.tap()
     }
 
     /// 长按
     static func longPress(at point: CGPoint, duration: TimeInterval = 1.0) {
-        performTouch(at: point, type: .longPress, duration: duration)
+        let coordinate = normalizedCoordinate(for: point)
+        coordinate.press(forDuration: duration)
     }
 
     /// 滑动
     static func swipe(from start: CGPoint, to end: CGPoint, duration: TimeInterval = 0.3) {
-        performSwipe(from: start, to: end, duration: duration)
+        let startCoordinate = normalizedCoordinate(for: start)
+        let endCoordinate = normalizedCoordinate(for: end)
+        startCoordinate.press(forDuration: duration, thenDragTo: endCoordinate)
     }
 
     /// 双击
     static func doubleTap(at point: CGPoint) {
-        performTouch(at: point, type: .doubleTap)
+        let coordinate = normalizedCoordinate(for: point)
+        coordinate.doubleTap()
     }
 
     /// 多点触控 (双指缩放)
@@ -38,42 +43,16 @@ class TouchSimulator {
         app.pinch(withScale: scale, velocity: velocity)
     }
 
-    // MARK: - 触控实现
+    // MARK: - 坐标转换
 
-    private enum TouchType {
-        case tap, longPress, doubleTap
-    }
-
-    private static func performTouch(at point: CGPoint, type: TouchType, duration: TimeInterval = 1.0) {
+    /// 将像素坐标转换为 XCUIGamepadElement 坐标
+    /// 使用 XCUIApplication 的 coordinate(withNormalizedOffset:) 方法
+    private static func normalizedCoordinate(for point: CGPoint) -> XCUICoordinate {
+        let app = XCUIApplication()
         let normalized = CGVector(
             dx: point.x / UIScreen.main.bounds.width,
             dy: point.y / UIScreen.main.bounds.height
         )
-        let coordinate = XCUIDevice.shared.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0))
-            .coordinate(withNormalizedOffset: normalized)
-
-        switch type {
-        case .tap:
-            coordinate.tap()
-        case .longPress:
-            coordinate.press(forDuration: duration)
-        case .doubleTap:
-            coordinate.doubleTap()
-        }
-    }
-
-    private static func performSwipe(from start: CGPoint, to end: CGPoint, duration: TimeInterval = 0.3) {
-        let screenBounds = UIScreen.main.bounds
-        let startCoordinate = XCUIDevice.shared.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0))
-            .coordinate(withNormalizedOffset: CGVector(
-                dx: start.x / screenBounds.width,
-                dy: start.y / screenBounds.height
-            ))
-        let endCoordinate = XCUIDevice.shared.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0))
-            .coordinate(withNormalizedOffset: CGVector(
-                dx: end.x / screenBounds.width,
-                dy: end.y / screenBounds.height
-            ))
-        startCoordinate.press(forDuration: duration, thenDragTo: endCoordinate)
+        return app.coordinate(withNormalizedOffset: normalized)
     }
 }
