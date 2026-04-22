@@ -5,19 +5,24 @@ options:
     iOS: "12.4"
   xcodeVersion: "15.0"
   generateEmptyDirectories: true
+  groupSortPosition: top
 
 settings:
   base:
     SWIFT_VERSION: "5.0"
     ENABLE_BITCODE: NO
     IPHONEOS_DEPLOYMENT_TARGET: "12.4"
+    GCC_WARN_ABOUT_RETURN_TYPE: YES_ERROR
+    GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE
 
 targets:
   iOSControlAgent:
     type: application
     platform: iOS
     sources:
-      - iOSControlAgent
+      - path: iOSControlAgent
+        excludes:
+          - "**/.DS_Store"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ioscontrol.agent
@@ -25,18 +30,41 @@ targets:
         CODE_SIGN_IDENTITY: ""
         CODE_SIGNING_REQUIRED: NO
         CODE_SIGNING_ALLOWED: NO
-        OTHER_LDFLAGS: ["-lsqlite3"]
-        FRAMEWORKS: ["XCTest.framework", "JavaScriptCore.framework", "UIKit.framework", "Foundation.framework"]
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        LD_RUNPATH_SEARCH_PATHS:
+          - "$(inherited)"
+          - "@executable_path/Frameworks"
+        OTHER_LDFLAGS:
+          - "-lsqlite3"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SWIFT_EMIT_LOC_STRINGS: YES
+      configs:
+        Debug:
+          SWIFT_OPTIMIZATION_LEVEL: "-Onone"
+        Release:
+          SWIFT_OPTIMIZATION_LEVEL: "-O"
     entitlements:
       path: iOSControlAgent/iOSControlAgent.entitlements
+      properties:
+        com.apple.security.network.server: true
+        com.apple.security.network.client: true
 
   iOSControlAgentTests:
     type: bundle.unit-test
     platform: iOS
     sources:
-      - iOSControlAgentTests
+      - path: iOSControlAgentTests
+        excludes:
+          - "**/.DS_Store"
     dependencies:
       - target: iOSControlAgent
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ioscontrol.agent.tests
+        INFOPLIST_FILE: iOSControlAgentTests/Info.plist
+        CODE_SIGN_IDENTITY: ""
+        CODE_SIGNING_REQUIRED: NO
+        CODE_SIGNING_ALLOWED: NO
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/iOSControlAgent.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/iOSControlAgent"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+        TARGETED_DEVICE_FAMILY: "1,2"

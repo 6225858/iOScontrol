@@ -18,22 +18,16 @@ jobs:
         with:
           xcode-version: '15.4'
 
-      - name: Install dependencies
-        run: |
-          brew install swift-format 2>/dev/null || true
+      - name: Install XcodeGen
+        run: brew install xcodegen
 
-      - name: Create Xcode project
-        run: |
-          cd resources/ipa/iOSControlAgent
-
-          # 使用 swift package init 创建项目结构不可行（不支持 iOS App）
-          # 需要用 xcodegen 生成项目
-          brew install xcodegen 2>/dev/null || true
-
-      - name: Generate Xcode project with XcodeGen
+      - name: Generate Xcode project
         run: |
           cd resources/ipa/iOSControlAgent
+          # 删除手写的 pbxproj，用 XcodeGen 重新生成
+          rm -rf iOSControlAgent.xcodeproj
           xcodegen generate
+          echo "✅ Xcode project generated"
 
       - name: Build
         run: |
@@ -48,7 +42,18 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             ENABLE_BITCODE=NO \
-            build
+            build 2>&1 | tee build.log
+
+      - name: Check build result
+        run: |
+          cd resources/ipa/iOSControlAgent
+          if grep -q "BUILD SUCCEEDED" build.log; then
+            echo "✅ Build succeeded"
+          else
+            echo "❌ Build failed"
+            tail -50 build.log
+            exit 1
+          fi
 
       - name: Package IPA (unsigned)
         run: |
@@ -56,8 +61,10 @@ jobs:
           APP_PATH=$(find build -name "iOSControlAgent.app" -type d | head -1)
           if [ -z "$APP_PATH" ]; then
             echo "❌ iOSControlAgent.app not found"
+            find build -name "*.app" -type d
             exit 1
           fi
+          echo "Found app: $APP_PATH"
           mkdir -p Payload
           cp -r "$APP_PATH" Payload/
           zip -r iOSControlAgent.ipa Payload/
