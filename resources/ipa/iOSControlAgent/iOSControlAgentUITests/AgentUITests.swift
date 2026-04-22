@@ -2,51 +2,34 @@
 //  AgentUITests.swift
 //  iOSControlAgentUITests
 //
-//  UI 测试入口 — 在 XCTest 环境中启动 HTTP 代理服务
-//  通过 XCUITest Runner 运行，获得完整的触控/键盘模拟权限
+//  UI 测试入口 — XCTRunner 模式下保持测试进程存活
+//  主 App (XCTRunner) 已在 AppDelegate 中启动 HTTP 服务器
+//  此测试仅用于保持 XCUITest 进程不退出
 //
 
 import XCTest
 
 class AgentUITests: XCTestCase {
 
-    private var httpServer: HTTPServer?
-
     override func setUpWithError() throws {
         continueAfterFailure = true
 
-        // 启动被测 App
+        // 启动被测 App（XCTRunner 自身已启动 HTTP 服务器）
         let app = XCUIApplication()
         app.launch()
 
-        // 启动 HTTP 代理服务
-        httpServer = HTTPServer(port: 19402)
-        httpServer?.start()
-
-        print("[Agent] ✅ HTTP server started on port 19402")
+        print("[Agent] ✅ XCTRunner app launched")
     }
 
-    override func tearDownWithError() throws {
-        httpServer?.stop()
-        httpServer = nil
-    }
-
-    /// 永久运行的测试 — 保持代理服务不退出
-    /// 通过无限循环 + sleep 保持测试进程存活
+    /// 永久运行的测试 — 保持测试进程存活
+    /// HTTP 服务器由主 App 的 AppDelegate 启动和管理
+    /// 此处仅需保持 XCUITest 进程不退出
     func testAgentServer() {
-        print("[Agent] 🚀 Agent server running, keeping test alive...")
+        print("[Agent] 🚀 Agent server running (HTTP server managed by AppDelegate), keeping test alive...")
 
-        // 保持测试进程存活，直到被外部终止
-        // 对标项目也是类似的永续运行模式
         let keepAlive = true
         while keepAlive {
-            // 检查服务是否仍在运行
-            if httpServer?.isRunning == true {
-                sleep(10)
-            } else {
-                print("[Agent] ❌ Server stopped unexpectedly")
-                break
-            }
+            sleep(10)
         }
     }
 }
