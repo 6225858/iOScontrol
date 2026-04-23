@@ -13,7 +13,11 @@ class ViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .systemBackground
+        if #available(iOS 13.0, *) {
+            view.backgroundColor = .systemBackground
+        } else {
+            view.backgroundColor = .white
+        }
 
         statusLabel.text = "iOSControl Agent\nWaiting for XCTest..."
         statusLabel.numberOfLines = 0
