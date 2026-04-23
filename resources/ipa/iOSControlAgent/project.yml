@@ -2,7 +2,7 @@ name: iOSControlAgent
 options:
   bundleIdPrefix: com.ioscontrol
   deploymentTarget:
-    iOS: "12.0"
+    iOS: "13.0"
   xcodeVersion: "15.0"
   generateEmptyDirectories: true
   groupSortPosition: top
@@ -11,7 +11,7 @@ settings:
   base:
     SWIFT_VERSION: "5.0"
     ENABLE_BITCODE: NO
-    IPHONEOS_DEPLOYMENT_TARGET: "12.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "13.0"
     GCC_WARN_ABOUT_RETURN_TYPE: YES_ERROR
     GCC_WARN_UNINITIALIZED_AUTOS: YES_AGGRESSIVE
 
