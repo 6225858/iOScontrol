@@ -16,8 +16,10 @@ settings:
     GCC_WARN_UNINITIALIZED_AUTOS: YES_AGGRESSIVE
 
 targets:
-  # 宿主 App — 纯 UI 壳，不导入 XCTest
-  # bundleId 以 .xctrunner 结尾，go-ios/tidevice 识别为 XCUITest Runner
+  # 单一 App target — EasyClick 模式
+  # bundleId 以 .xctrunner 结尾，iOS 允许加载 XCTest 框架
+  # App 启动时通过 dlopen 加载 XCTest，直接运行自动化代码
+  # 使用 ios launch 命令启动，无需 runwda
   iOSControlAgent:
     type: application
     platform: iOS
@@ -39,6 +41,11 @@ targets:
         TARGETED_DEVICE_FAMILY: "1,2"
         SWIFT_EMIT_LOC_STRINGS: YES
         ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES: YES
+        # 链接 JavaScriptCore 框架
+        OTHER_LDFLAGS:
+          - "-lsqlite3"
+          - "-framework"
+          - "JavaScriptCore"
       configs:
         Debug:
           SWIFT_OPTIMIZATION_LEVEL: "-Onone"
@@ -49,33 +56,3 @@ targets:
       properties:
         com.apple.security.network.server: true
         com.apple.security.network.client: true
-    dependencies:
-      - target: iOSControlAgentUITests
-
-  # UI Test bundle — 包含所有自动化代码，嵌入 App 的 PlugIns 目录
-  # 通过 go-ios runwda 启动，在 XCTest 运行时中获得触控/键盘模拟权限
-  iOSControlAgentUITests:
-    type: bundle.ui-testing
-    platform: iOS
-    sources:
-      - path: iOSControlAgentUITests
-        excludes:
-          - "**/.DS_Store"
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.ioscontrol.agent.uitests
-        INFOPLIST_FILE: iOSControlAgentUITests/Info.plist
-        CODE_SIGN_IDENTITY: ""
-        CODE_SIGNING_REQUIRED: NO
-        CODE_SIGNING_ALLOWED: NO
-        TARGETED_DEVICE_FAMILY: "1,2"
-        SWIFT_EMIT_LOC_STRINGS: YES
-        OTHER_LDFLAGS:
-          - "-lsqlite3"
-          - "-framework"
-          - "JavaScriptCore"
-      configs:
-        Debug:
-          SWIFT_OPTIMIZATION_LEVEL: "-Onone"
-        Release:
-          SWIFT_OPTIMIZATION_LEVEL: "-O"

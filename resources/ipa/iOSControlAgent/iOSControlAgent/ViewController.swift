@@ -28,7 +28,7 @@ class ViewController: UIViewController {
         statusLabel = UILabel()
         statusLabel.text = "● 等待连接"
         statusLabel.font = UIFont.systemFont(ofSize: 18)
-        statusLabel.textColor = .green
+        statusLabel.textColor = .orange
         statusLabel.textAlignment = .center
         statusLabel.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(statusLabel)
@@ -62,5 +62,18 @@ class ViewController: UIViewController {
             versionLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             versionLabel.topAnchor.constraint(equalTo: portLabel.bottomAnchor, constant: 10),
         ])
+    }
+
+    /// 更新服务器运行状态
+    func updateStatus(running: Bool) {
+        DispatchQueue.main.async {
+            if running {
+                self.statusLabel.text = "● 运行中"
+                self.statusLabel.textColor = .green
+            } else {
+                self.statusLabel.text = "● 已停止"
+                self.statusLabel.textColor = .red
+            }
+        }
     }
 }

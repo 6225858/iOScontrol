@@ -7,6 +7,9 @@ Thumbs.db
 .env
 .env.local
 
+# go-ios binary
+go-ios-bin/
+
 # iOS build artifacts
 resources/ipa/iOSControlAgent/build/
 resources/ipa/iOSControlAgent/DerivedData/
