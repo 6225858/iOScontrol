@@ -60,9 +60,22 @@ jobs:
             exit 1
           fi
 
+      - name: Debug build products
+        run: |
+          cd resources/ipa/iOSControlAgent
+          echo "=== All .app bundles ==="
+          find build -name "*.app" -type d
+          echo "=== All .xctest bundles ==="
+          find build -name "*.xctest" -type d
+          echo "=== Build/Products structure ==="
+          find build/Build/Products -maxdepth 3 -type d 2>/dev/null || echo "No Products dir"
+
       - name: Package IPA (unsigned, with xctest bundle)
         run: |
           cd resources/ipa/iOSControlAgent
+          PRODUCTS_DIR="build/Build/Products/Release-iphoneos"
+          
+          # Find the app bundle
           APP_PATH=$(find build/Build/Products -name "iOSControlAgent.app" -type d | head -1)
           if [ -z "$APP_PATH" ]; then
             echo "❌ iOSControlAgent.app not found"
@@ -71,32 +84,43 @@ jobs:
           fi
           echo "Found app: $APP_PATH"
 
-          # 列出 app 内部结构
-          echo "=== App contents ==="
-          ls -la "$APP_PATH/"
-          echo "=== Frameworks ==="
-          ls -la "$APP_PATH/Frameworks/" 2>/dev/null || echo "No Frameworks directory"
-          echo "=== PlugIns (xctest bundles) ==="
-          ls -laR "$APP_PATH/PlugIns/" 2>/dev/null || echo "No PlugIns directory"
-
-          # 验证 xctest bundle 存在
-          if [ -d "$APP_PATH/PlugIns" ]; then
-            echo "✅ xctest bundle found in PlugIns/"
+          # Find the xctest bundle
+          XCTEST_PATH=$(find build/Build/Products -name "iOSControlAgentUITests.xctest" -type d | head -1)
+          if [ -z "$XCTEST_PATH" ]; then
+            echo "⚠️ iOSControlAgentUITests.xctest not found in Products, searching all..."
+            XCTEST_PATH=$(find build -name "iOSControlAgentUITests.xctest" -type d | head -1)
+          fi
+          
+          if [ -n "$XCTEST_PATH" ]; then
+            echo "Found xctest: $XCTEST_PATH"
+            # Copy xctest bundle into app's PlugIns directory
+            mkdir -p "$APP_PATH/PlugIns"
+            cp -r "$XCTEST_PATH" "$APP_PATH/PlugIns/"
+            echo "✅ xctest bundle copied to PlugIns/"
           else
-            echo "⚠️ No PlugIns directory — xctest bundle may be missing!"
-            echo "Searching for xctest bundles..."
+            echo "❌ iOSControlAgentUITests.xctest NOT FOUND anywhere in build output!"
+            echo "Searching for any xctest..."
             find build -name "*.xctest" -type d
+            exit 1
           fi
 
-          # 移除签名（避免安装问题）
+          # List app contents
+          echo "=== App contents ==="
+          ls -la "$APP_PATH/"
+          echo "=== PlugIns ==="
+          ls -laR "$APP_PATH/PlugIns/"
+          echo "=== Frameworks ==="
+          ls -la "$APP_PATH/Frameworks/" 2>/dev/null || echo "No Frameworks directory"
+
+          # Remove signing (avoid install issues)
           find "$APP_PATH" -name "_CodeSignature" -type d -exec rm -rf {} + 2>/dev/null || true
           find "$APP_PATH" -name "CodeResources" -type f -delete 2>/dev/null || true
           find "$APP_PATH" -name "embedded.mobileprovision" -type f -delete 2>/dev/null || true
 
-          # 创建 IPA
+          # Create IPA
           mkdir -p Payload
           cp -r "$APP_PATH" Payload/
-          zip -r iOSControlAgent.ipa Payload/
+          zip -qr iOSControlAgent.ipa Payload/
           rm -rf Payload
           echo "✅ IPA created: iOSControlAgent.ipa"
           ls -lh iOSControlAgent.ipa
