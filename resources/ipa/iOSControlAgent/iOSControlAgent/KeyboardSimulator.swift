@@ -24,19 +24,12 @@ class KeyboardSimulator {
     static func deleteKey(count: Int = 1) {
         guard let app = getXCUIApplication() else { return }
         for _ in 0..<count {
-            // 通过 keyboards.keys["delete"].tap() 的 runtime 等效调用
-            let keyboardsSel = NSSelectorFromString("keyboards")
-            if app.responds(to:keyboardsSel),
-               let keyboards = app.perform(keyboardsSel)?.takeUnretainedValue() as? NSObject {
-                let keysSel = NSSelectorFromString("keys")
-                if keyboards.responds(to: keysSel) {
-                    if let keys = keyboards.perform(keysSel)?.takeUnretainedValue() as? NSObject {
-                        let objectForKeyedSubscriptSel = NSSelectorFromString("objectForKeyedSubscript:")
-                        if let deleteKey = keys.perform(objectForKeyedSubscriptSel, with: "delete")?.takeUnretainedValue() as? NSObject {
-                            let tapSel = NSSelectorFromString("tap")
-                            if deleteKey.responds(to: tapSel) {
-                                _ = deleteKey.perform(tapSel)
-                            }
+            if let keyboards = runtimeCall(app, sel: "keyboards") {
+                if let keys = runtimeCall(keyboards, sel: "keys") {
+                    if let deleteKey = runtimeCall(keys, sel: "objectForKeyedSubscript:", arg: "delete" as NSString) {
+                        let tapSel = NSSelectorFromString("tap")
+                        if deleteKey.responds(to: tapSel) {
+                            _ = deleteKey.perform(tapSel)
                         }
                     }
                 }
@@ -47,18 +40,12 @@ class KeyboardSimulator {
     /// 按 Return 键
     static func returnKey() {
         guard let app = getXCUIApplication() else { return }
-        let keyboardsSel = NSSelectorFromString("keyboards")
-        if app.responds(to: keyboardsSel),
-           let keyboards = app.perform(keyboardsSel)?.takeUnretainedValue() as? NSObject {
-            let keysSel = NSSelectorFromString("keys")
-            if keyboards.responds(to: keysSel) {
-                if let keys = keyboards.perform(keysSel)?.takeUnretainedValue() as? NSObject {
-                    let objectForKeyedSubscriptSel = NSSelectorFromString("objectForKeyedSubscript:")
-                    if let returnKey = keys.perform(objectForKeyedSubscriptSel, with: "Return")?.takeUnretainedValue() as? NSObject {
-                        let tapSel = NSSelectorFromString("tap")
-                        if returnKey.responds(to: tapSel) {
-                            _ = returnKey.perform(tapSel)
-                        }
+        if let keyboards = runtimeCall(app, sel: "keyboards") {
+            if let keys = runtimeCall(keyboards, sel: "keys") {
+                if let returnKey = runtimeCall(keys, sel: "objectForKeyedSubscript:", arg: "Return" as NSString) {
+                    let tapSel = NSSelectorFromString("tap")
+                    if returnKey.responds(to: tapSel) {
+                        _ = returnKey.perform(tapSel)
                     }
                 }
             }
@@ -70,7 +57,6 @@ class KeyboardSimulator {
         guard let device = getXCUIDevice() else { return }
         let sel = NSSelectorFromString("pressButton:")
         if device.responds(to: sel) {
-            // XCUIDevice.Button.home = 1
             _ = device.perform(sel, with: NSNumber(value: 1))
         }
     }
@@ -80,7 +66,6 @@ class KeyboardSimulator {
         guard let device = getXCUIDevice() else { return }
         let sel = NSSelectorFromString("pressButton:")
         if device.responds(to: sel) {
-            // XCUIDevice.Button.volumeUp = 2
             _ = device.perform(sel, with: NSNumber(value: 2))
         }
     }
@@ -90,7 +75,6 @@ class KeyboardSimulator {
         guard let device = getXCUIDevice() else { return }
         let sel = NSSelectorFromString("pressButton:")
         if device.responds(to: sel) {
-            // XCUIDevice.Button.volumeDown = 3
             _ = device.perform(sel, with: NSNumber(value: 3))
         }
     }
@@ -104,33 +88,59 @@ class KeyboardSimulator {
 
     // MARK: - Runtime 辅助
 
-    private static func getXCUIApplication() -> NSObject? {
-        if let appClass = NSClassFromString("XCUIApplication") as? NSObject.Type {
-            let sharedSel = NSSelectorFromString("shared")
-            if appClass.responds(to: sharedSel) {
-                if let result = appClass.perform(sharedSel),
-                   let app = result.takeUnretainedValue() as? NSObject {
-                    return app
-                }
-            }
-            return appClass.init()
+    /// 对实例执行无参数 selector 并返回 NSObject?
+    private static func runtimeCall(_ target: NSObject, sel: String) -> NSObject? {
+        let selector = NSSelectorFromString(sel)
+        guard target.responds(to: selector) else { return nil }
+        let result = target.perform(selector)
+        if let unmanaged = result {
+            return unmanaged.takeUnretainedValue() as? NSObject
         }
-        print("[KeyboardSimulator] ⚠️ XCUIApplication class not found")
         return nil
     }
 
+    /// 对实例执行单参数 selector 并返回 NSObject?
+    private static func runtimeCall(_ target: NSObject, sel: String, arg: NSObject) -> NSObject? {
+        let selector = NSSelectorFromString(sel)
+        guard target.responds(to: selector) else { return nil }
+        let result = target.perform(selector, with: arg)
+        if let unmanaged = result {
+            return unmanaged.takeUnretainedValue() as? NSObject
+        }
+        return nil
+    }
+
+    private static func getXCUIApplication() -> NSObject? {
+        guard let appClass = NSClassFromString("XCUIApplication") as? NSObject.Type else {
+            print("[KeyboardSimulator] ⚠️ XCUIApplication class not found")
+            return nil
+        }
+        let sharedSel = NSSelectorFromString("shared")
+        if appClass.responds(to: sharedSel) {
+            let result = appClass.perform(sharedSel)
+            if let unmanaged = result {
+                if let app = unmanaged.takeUnretainedValue() as? NSObject {
+                    return app
+                }
+            }
+        }
+        return appClass.init()
+    }
+
     private static func getXCUIDevice() -> NSObject? {
-        if let deviceClass = NSClassFromString("XCUIDevice") as? NSObject.Type {
-            let sharedSel = NSSelectorFromString("shared")
-            if deviceClass.responds(to: sharedSel) {
-                if let result = deviceClass.perform(sharedSel),
-                   let device = result.takeUnretainedValue() as? NSObject {
+        guard let deviceClass = NSClassFromString("XCUIDevice") as? NSObject.Type else {
+            print("[KeyboardSimulator] ⚠️ XCUIDevice class not found")
+            return nil
+        }
+        let sharedSel = NSSelectorFromString("shared")
+        if deviceClass.responds(to: sharedSel) {
+            let result = deviceClass.perform(sharedSel)
+            if let unmanaged = result {
+                if let device = unmanaged.takeUnretainedValue() as? NSObject {
                     return device
                 }
             }
-            return deviceClass.init()
         }
-        print("[KeyboardSimulator] ⚠️ XCUIDevice class not found")
-        return nil
+        return deviceClass.init()
     }
 }

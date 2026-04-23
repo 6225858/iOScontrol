@@ -76,19 +76,23 @@ class TouchSimulator {
 
     /// 获取 XCUIApplication 实例
     private static func getXCUIApplication() -> NSObject? {
-        // 尝试获取 XCUIApplication.shared（iOS 16+）
-        if let appClass = NSClassFromString("XCUIApplication") as? NSObject.Type {
-            let sharedSel = NSSelectorFromString("shared")
-            if appClass.responds(to: sharedSel) {
-                if let result = appClass.perform(sharedSel),
-                   let app = result.takeUnretainedValue() as? NSObject {
+        guard let appClass = NSClassFromString("XCUIApplication") as? NSObject.Type else {
+            print("[TouchSimulator] ⚠️ XCUIApplication class not found")
+            return nil
+        }
+
+        // 尝试 XCUIApplication.shared
+        let sharedSel = NSSelectorFromString("shared")
+        if appClass.responds(to: sharedSel) {
+            let result = appClass.perform(sharedSel)
+            if let unmanaged = result {
+                if let app = unmanaged.takeUnretainedValue() as? NSObject {
                     return app
                 }
             }
-            // 降级：创建新实例
-            return appClass.init()
         }
-        print("[TouchSimulator] ⚠️ XCUIApplication class not found")
-        return nil
+
+        // 降级：创建新实例
+        return appClass.init()
     }
 }

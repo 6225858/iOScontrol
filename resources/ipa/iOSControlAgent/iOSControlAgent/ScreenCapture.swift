@@ -14,18 +14,15 @@ class ScreenCapture {
     /// 截取当前屏幕
     static func takeScreenshot() -> UIImage? {
         // 方式1: 通过 XCUIScreen.main.screenshot() 获取
-        if let screenClass = NSClassFromString("XCUIScreen") {
-            let mainSel = NSSelectorFromString("mainScreen")
-            if screenClass.responds(to: mainSel),
-               let screen = screenClass.perform(mainSel)?.takeUnretainedValue() as? NSObject {
-                let screenshotSel = NSSelectorFromString("screenshot")
-                if screen.responds(to: screenshotSel),
-                   let screenshot = screen.perform(screenshotSel)?.takeUnretainedValue() as? NSObject {
-                    // XCUIScreenshot 有 image 属性
+        if let screen = getXCUIMainScreen() {
+            let screenshotSel = NSSelectorFromString("screenshot")
+            if screen.responds(to: screenshotSel) {
+                if let screenshot = performSelector(screen, sel: screenshotSel) {
                     let imageSel = NSSelectorFromString("image")
-                    if screenshot.responds(to: imageSel),
-                       let image = screenshot.perform(imageSel)?.takeUnretainedValue() as? UIImage {
-                        return image
+                    if screenshot.responds(to: imageSel) {
+                        if let image = performSelector(screenshot, sel: imageSel) as? UIImage {
+                            return image
+                        }
                     }
                 }
             }
@@ -51,6 +48,27 @@ class ScreenCapture {
             return nil
         }
         return data.base64EncodedString()
+    }
+
+    // MARK: - Runtime 辅助
+
+    /// 获取 XCUIScreen.mainScreen
+    private static func getXCUIMainScreen() -> NSObject? {
+        guard let screenClass = NSClassFromString("XCUIScreen") as? NSObject.Type else {
+            return nil
+        }
+        let mainSel = NSSelectorFromString("mainScreen")
+        guard screenClass.responds(to: mainSel) else { return nil }
+
+        // class method: XCUIScreen.mainScreen()
+        let result = screenClass.perform(mainSel)
+        return result?.takeUnretainedValue() as? NSObject
+    }
+
+    /// 安全执行 performSelector 并返回 NSObject?
+    private static func performSelector(_ target: NSObject, sel: Selector) -> NSObject? {
+        let result = target.perform(sel)
+        return result?.takeUnretainedValue() as? NSObject
     }
 
     // MARK: - 降级截图
