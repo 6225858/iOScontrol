@@ -2,8 +2,8 @@
 //  ScreenCapture.swift
 //  iOSControlAgent
 //
-//  截图功能 — 使用 UIGraphicsImageRenderer 截图（不依赖 XCTest）
-//  注意：App 在后台时截图会返回空白，需保持前台运行
+//  截图功能 — 优先使用 WDA 截图 API，降级到 UIGraphicsImageRenderer
+//  WDA 截图可以捕获整个屏幕（包括其他 App），UIGraphics 只能截自身
 //
 
 import Foundation
@@ -11,8 +11,37 @@ import UIKit
 
 class ScreenCapture {
 
-    /// 截取当前屏幕 — 使用 UIGraphicsImageRenderer（普通 App 可用）
-    static func takeScreenshot() -> UIImage? {
+    /// WDA 截图 — 通过 WebDriverAgent HTTP API 获取屏幕截图
+    /// WDA 返回 PNG base64
+    private static func takeScreenshotViaWDA() -> UIImage? {
+        let wdaPort = 8100
+        guard let url = URL(string: "http://127.0.0.1:\(wdaPort)/wd/hub/screenshot") else { return nil }
+
+        let semaphore = DispatchSemaphore(value: 0)
+        var resultImage: UIImage?
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.timeoutInterval = 5.0
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            defer { semaphore.signal() }
+
+            guard let data = data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let value = json["value"] as? String,
+                  let imageData = Data(base64Encoded: value) else {
+                return
+            }
+            resultImage = UIImage(data: imageData)
+        }.resume()
+
+        _ = semaphore.wait(timeout: .now() + 6.0)
+        return resultImage
+    }
+
+    /// 本地截图 — 使用 UIGraphicsImageRenderer（只能截自身 App 窗口）
+    private static func takeScreenshotLocal() -> UIImage? {
         guard let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) else {
             return nil
         }
@@ -21,6 +50,16 @@ class ScreenCapture {
         return renderer.image { context in
             window.layer.render(in: context.cgContext)
         }
+    }
+
+    /// 截取当前屏幕 — 优先 WDA，降级到本地
+    static func takeScreenshot() -> UIImage? {
+        // 1. 优先使用 WDA 截图（可截整个屏幕，包括其他 App）
+        if let image = takeScreenshotViaWDA() {
+            return image
+        }
+        // 2. 降级到本地截图（只能截自身 App）
+        return takeScreenshotLocal()
     }
 
     /// 截取屏幕并返回 PNG base64
