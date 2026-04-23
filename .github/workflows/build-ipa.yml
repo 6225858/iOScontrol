@@ -34,7 +34,7 @@ jobs:
           sed -i '' 's/compatibilityVersion = "Xcode 16.0"/compatibilityVersion = "Xcode 14.0"/' "$PBXPROJ"
           echo "✅ Project format downgraded for Xcode 15"
 
-      - name: Build App
+      - name: Build for Testing
         run: |
           cd resources/ipa/iOSControlAgent
           xcodebuild \
@@ -47,7 +47,7 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             ENABLE_BITCODE=NO \
-            build 2>&1 | tee build.log
+            build-for-testing 2>&1 | tee build.log
 
       - name: Check build result
         run: |
@@ -60,7 +60,7 @@ jobs:
             exit 1
           fi
 
-      - name: Package IPA (unsigned)
+      - name: Package IPA (unsigned, with xctest bundle)
         run: |
           cd resources/ipa/iOSControlAgent
           APP_PATH=$(find build/Build/Products -name "iOSControlAgent.app" -type d | head -1)
@@ -76,6 +76,17 @@ jobs:
           ls -la "$APP_PATH/"
           echo "=== Frameworks ==="
           ls -la "$APP_PATH/Frameworks/" 2>/dev/null || echo "No Frameworks directory"
+          echo "=== PlugIns (xctest bundles) ==="
+          ls -laR "$APP_PATH/PlugIns/" 2>/dev/null || echo "No PlugIns directory"
+
+          # 验证 xctest bundle 存在
+          if [ -d "$APP_PATH/PlugIns" ]; then
+            echo "✅ xctest bundle found in PlugIns/"
+          else
+            echo "⚠️ No PlugIns directory — xctest bundle may be missing!"
+            echo "Searching for xctest bundles..."
+            find build -name "*.xctest" -type d
+          fi
 
           # 移除签名（避免安装问题）
           find "$APP_PATH" -name "_CodeSignature" -type d -exec rm -rf {} + 2>/dev/null || true

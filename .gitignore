@@ -10,6 +10,12 @@ Thumbs.db
 # go-ios binary
 go-ios-bin/
 
+# temp debug files
+applist.txt
+appls.txt
+tunnel*.log
+forward*.log
+
 # iOS build artifacts
 resources/ipa/iOSControlAgent/build/
 resources/ipa/iOSControlAgent/DerivedData/
