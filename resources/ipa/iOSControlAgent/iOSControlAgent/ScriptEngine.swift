@@ -1,6 +1,6 @@
 //
 //  ScriptEngine.swift
-//  iOSControlAgentUITests
+//  iOSControlAgent
 //
 //  脚本执行引擎 — 管理脚本任务的创建、执行、状态追踪
 //
@@ -218,11 +218,7 @@ class ScriptEngine {
 
         // screenshot()
         let screenshotBlock: @convention(block) () -> String? = {
-            if let image = ScreenCapture.takeScreenshot(),
-               let data = image.pngData() {
-                return data.base64EncodedString()
-            }
-            return nil
+            return ScreenCapture.takeScreenshotBase64()
         }
         context.setObject(screenshotBlock, forKeyedSubscript: "screenshot" as NSString)
 

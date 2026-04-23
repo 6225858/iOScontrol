@@ -1,6 +1,6 @@
 //
 //  DeviceInfoCollector.swift
-//  iOSControlAgentUITests
+//  iOSControlAgent
 //
 //  设备信息收集 — 收集设备硬件/系统/网络信息
 //
@@ -36,6 +36,7 @@ class DeviceInfoCollector {
             "isJailbroken": isJailbroken(),
             "agentVersion": "1.0.0",
             "agentPort": 19402,
+            "agentMode": "app",
         ]
     }
 

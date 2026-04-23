@@ -1,6 +1,6 @@
 //
 //  IECScriptEngine.swift
-//  iOSControlAgentUITests
+//  iOSControlAgent
 //
 //  IEC 脚本引擎 — 提供 EasyClick 兼容的自动化 API
 //
@@ -61,7 +61,7 @@ class IECScriptEngine {
         context.setObject(pressBlock(), forKeyedSubscript: "press" as NSString)
         // input(text)
         context.setObject(inputBlock(), forKeyedSubscript: "input" as NSString)
-        // screenshot() → base64
+        // screenshot() -> base64
         context.setObject(screenshotBlock(), forKeyedSubscript: "screenshot" as NSString)
         // sleep(ms)
         context.setObject(sleepBlock(), forKeyedSubscript: "sleep" as NSString)

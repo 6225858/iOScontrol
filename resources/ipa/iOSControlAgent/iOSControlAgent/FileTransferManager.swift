@@ -1,6 +1,6 @@
 //
 //  FileTransferManager.swift
-//  iOSControlAgentUITests
+//  iOSControlAgent
 //
 //  文件传输管理 — 管理设备端文件的上传/下载
 //

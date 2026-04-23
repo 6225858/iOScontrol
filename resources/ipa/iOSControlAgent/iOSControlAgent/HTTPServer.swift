@@ -1,8 +1,9 @@
 //
 //  HTTPServer.swift
-//  iOSControlAgentUITests
+//  iOSControlAgent
 //
 //  自定义代理 IPA 的 HTTP 服务端 — /ecnb/ 协议
+//  普通 App 模式，不依赖 XCTest
 //
 
 import Foundation
@@ -168,6 +169,7 @@ class HTTPServer {
                 "version": "1.0.0",
                 "port": Int(port),
                 "uptime": Int(Date().timeIntervalSince1970),
+                "mode": "app",
             ])
 
         case "/ecnb/script/run":

@@ -1,29 +1,51 @@
-# iOSControl Agent — 自定义代理 IPA
+# iOSControl Agent — iOS 设备自动化代理 IPA
 
-基于 XCTest Runner 架构的 iOS 设备自动化代理应用。
+iOS 15+ 普通 App 模式运行的 iOS 设备自动化代理，在设备上运行 HTTP 服务（/ecnb/ 协议），为 Windows 桌面客户端提供设备控制能力。
 
 ## 架构
 
-采用 EasyClick-Runner 相同的 XCTest Runner Shell 模式：
+采用**普通 App 模式**（不依赖 XCTest）：
 
 ```
-iOSControlAgent.app (宿主 App, ~100KB)
-└── Plugins/
-    └── iOSControlAgent.xctest (测试 Bundle)
-        └── iosauto.framework (自动化引擎, 待替换)
-        └── WebDriverAgentLib.framework (WDA 内嵌)
+iOSControlAgent.app (~1-2MB)
+├── AppDelegate.swift       — App 入口，无条件启动 HTTPServer
+├── HTTPServer.swift         — /ecnb/ 协议 HTTP 服务
+├── Socket.swift             — POSIX Socket 封装
+├── ScreenCapture.swift      — 截图（UIGraphicsImageRenderer）
+├── ScriptEngine.swift       — 脚本执行引擎（JavaScriptCore）
+├── IECScriptEngine.swift    — EasyClick 兼容层
+├── TouchSimulator.swift     — 触控模拟（通过 WDA 代理）
+├── KeyboardSimulator.swift  — 键盘模拟（通过 WDA 代理）
+├── ClipboardManager.swift   — 剪切板读写
+├── FileTransferManager.swift — 文件传输
+├── DeviceInfoCollector.swift — 设备信息收集
+└── ViewController.swift     — 状态显示界面
 ```
 
-宿主 App 极小，仅负责启动 `.xctest` Bundle。所有自动化逻辑在
-`.xctest` 内的 HTTP Server 中运行。
+### 为什么不用 XCTest 模式
+
+- `runwda`（标准 go-ios）在 iOS 16 上会卡住（testmanagerd 无响应）
+- `dlopen XCTest` 在非 XCUITest 进程中被 iOS 安全策略阻止
+- Ulink/iOScenter 的 iOS 15+ Agent 均以**普通 App** 运行
+- 普通 App 模式体积更小（~1MB vs ~3MB），启动更快
+
+### iOS 版本支持
+
+| iOS 版本 | 启动方式 | 说明 |
+|----------|----------|------|
+| iOS 15-16 | `ios launch` | 普通 App 模式，USB 端口转发 |
+| iOS 17.0-17.3 | `ios launch` + CoreDevice tunnel | 需要 tunnel |
+| iOS 17.4+ | `ios launch` + tunnel | 管理员/用户模式 |
+| iOS 12-14 | 不支持（需 xctest 模式） | 后续迭代 |
 
 ## HTTP API 协议 (/ecnb/)
 
-代理 IPA 在设备端监听端口 (默认 19402)，提供以下 `/ecnb/` 前缀的 API：
+代理 IPA 在设备端监听端口 19402，提供以下 API：
 
 | 端点 | 方法 | 说明 |
 |------|------|------|
 | `/ecnb/ping` | GET | 健康检查 |
+| `/ecnb/screenshot` | GET | 截取屏幕（JPEG base64） |
 | `/ecnb/script/run` | POST | 执行脚本 |
 | `/ecnb/script/status` | POST | 查询脚本状态 |
 | `/ecnb/script/stop` | POST | 停止脚本 |
@@ -32,46 +54,31 @@ iOSControlAgent.app (宿主 App, ~100KB)
 | `/ecnb/file/upload` | POST | 上传文件到设备 |
 | `/ecnb/file/download` | POST | 从设备下载文件 |
 | `/ecnb/device/info` | GET | 获取设备信息 |
+| `/ecnb/touch/tap` | POST | 点击（通过 WDA） |
+| `/ecnb/touch/longpress` | POST | 长按（通过 WDA） |
+| `/ecnb/touch/swipe` | POST | 滑动（通过 WDA） |
+| `/ecnb/keyboard/type` | POST | 输入文本（通过 WDA） |
+| `/ecnb/keyboard/home` | POST | Home 键（通过 WDA） |
 
-## 构建
+## 构建方式
 
-### 方式一：macOS + Xcode（推荐）
-
-1. 将 `iOSControlAgent` 目录拷贝到 Mac
-2. 打开 `iOSControlAgent.xcodeproj`
-3. 选择目标设备或 Generic iOS Device
-4. Product → Archive → 导出为 Development IPA
-5. 将导出的 `.ipa` 放入项目的 `resources/ipa/` 目录
-
-### 方式二：macOS + XcodeGen
+### 方式一：macOS + XcodeGen（推荐）
 
 ```bash
 brew install xcodegen
 cd iOSControlAgent
 xcodegen generate    # 根据 project.yml 生成 .xcodeproj
 open iOSControlAgent.xcodeproj
-# 然后在 Xcode 中 Archive
+# 然后在 Xcode 中 Archive → 导出 IPA
 ```
 
-### 方式三：Windows + GitHub Actions（无需 Mac）
-
-1. 将项目推送到 GitHub
-2. 修改 `.github/workflows/build-ipa.yml` 触发条件，或手动触发 workflow
-3. GitHub 会在 macOS runner 上自动构建，产出 unsigned IPA
-4. 在 Actions → Artifacts 中下载 `iOSControlAgent-unsigned`
-
-> **注意**: GitHub Actions 构建的 IPA 未签名，需要通过 AltSign/自签工具签名后才能安装到设备。
-
-### 方式四：Windows + 云端 Mac
-
-使用 MacStadium / AWS EC2 Mac / MacinCloud 等云 Mac 服务：
-1. SSH 登录云 Mac
-2. 拷贝项目源码
-3. 执行 `xcodebuild` 命令行构建
-4. 下载 IPA 回本地
+### 方式二：macOS + xcodebuild 命令行
 
 ```bash
-# 在云 Mac 上执行
+# 生成项目
+xcodegen generate
+
+# 构建
 xcodebuild -project iOSControlAgent.xcodeproj \
   -scheme iOSControlAgent \
   -sdk iphoneos \
@@ -85,39 +92,40 @@ xcodebuild -project iOSControlAgent.xcodeproj \
 mkdir -p Payload
 cp -r build/Build/Products/Release-iphoneos/iOSControlAgent.app Payload/
 zip -r iOSControlAgent.ipa Payload/
+rm -rf Payload
+```
+
+### 方式三：GitHub Actions（无需 Mac）
+
+1. 推送项目到 GitHub
+2. 手动触发 workflow 或推送 tag
+3. 在 Actions → Artifacts 中下载 IPA
+
+## 安装和启动
+
+```bash
+# 安装 IPA（需要签名或 TrollStore）
+ios install iOSControlAgent.ipa
+
+# 启动 App
+ios launch com.ioscontrol.agent.xctrunner
+
+# 端口转发（USB 连接时）
+ios forward 19402 19402
+
+# 测试
+curl http://localhost:19402/ecnb/ping
 ```
 
 ## 签名要求
 
 - 需要 Apple Developer 证书
-- 建议使用企业证书或 Development 证书
-- Bundle ID: `com.ioscontrol.agent`
-- 无签名 IPA 需通过 AltStore / SideStore / TrollStore 等方式安装
+- Bundle ID: `com.ioscontrol.agent.xctrunner`
+- 无签名 IPA 需通过 AltStore / SideStore / TrollStore 安装
 
-## 项目文件
+## 注意事项
 
-```
-iOSControlAgent/
-├── iOSControlAgent.xcodeproj/    # Xcode 项目文件
-├── project.yml                   # XcodeGen 配置 (可选)
-├── iOSControlAgent/              # 宿主 App 源码
-│   ├── AppDelegate.swift         # App 入口
-│   ├── ViewController.swift      # 状态界面
-│   ├── HTTPServer.swift          # HTTP 服务 + 路由
-│   ├── Socket.swift              # TCP Socket 封装
-│   ├── ScriptEngine.swift        # 脚本执行引擎
-│   ├── IECScriptEngine.swift     # EasyClick 兼容层
-│   ├── TouchSimulator.swift      # 触控模拟
-│   ├── KeyboardSimulator.swift   # 键盘模拟
-│   ├── ScreenCapture.swift       # 截图
-│   ├── ClipboardManager.swift    # 剪切板
-│   ├── FileTransferManager.swift # 文件传输
-│   ├── DeviceInfoCollector.swift # 设备信息
-│   ├── Info.plist
-│   ├── iOSControlAgent-Bridging-Header.h
-│   └── iOSControlAgent.entitlements
-├── iOSControlAgentTests/         # XCTest Bundle (Runner)
-│   ├── iOSControlAgentTests.swift
-│   └── Info.plist
-└── README.md
-```
+- HTTPServer 绑定 `0.0.0.0`（不是 `127.0.0.1`），USB 转发才能访问
+- App 需保持前台运行，后台截图返回空白
+- 触控/键盘操作通过 WDA 代理执行，需要同时运行 WDA
+- `ios launch` 在 iOS 16 上通过 usbmuxd 直接通信，不需要 tunnel

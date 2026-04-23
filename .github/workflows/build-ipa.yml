@@ -3,6 +3,8 @@ name: Build iOSControlAgent IPA
 on:
   push:
     branches: [main]
+    paths:
+      - 'resources/ipa/iOSControlAgent/**'
   workflow_dispatch:
 
 jobs:
@@ -24,7 +26,7 @@ jobs:
           cd resources/ipa/iOSControlAgent
           rm -rf iOSControlAgent.xcodeproj
           xcodegen generate
-          echo "✅ Xcode project generated"
+          echo "Xcode project generated"
 
       - name: Fix project format for Xcode 15
         run: |
@@ -32,9 +34,9 @@ jobs:
           PBXPROJ="iOSControlAgent.xcodeproj/project.pbxproj"
           sed -i '' 's/objectVersion = 77/objectVersion = 56/' "$PBXPROJ"
           sed -i '' 's/compatibilityVersion = "Xcode 16.0"/compatibilityVersion = "Xcode 14.0"/' "$PBXPROJ"
-          echo "✅ Project format downgraded for Xcode 15"
+          echo "Project format downgraded for Xcode 15"
 
-      - name: Build for Testing
+      - name: Build App
         run: |
           cd resources/ipa/iOSControlAgent
           xcodebuild \
@@ -47,68 +49,35 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             ENABLE_BITCODE=NO \
-            build-for-testing 2>&1 | tee build.log
+            build 2>&1 | tee build.log
 
       - name: Check build result
         run: |
           cd resources/ipa/iOSControlAgent
           if grep -q "BUILD SUCCEEDED" build.log; then
-            echo "✅ Build succeeded"
+            echo "Build succeeded"
           else
-            echo "❌ Build failed — showing errors"
+            echo "Build failed"
             grep -E "error:" build.log || tail -80 build.log
             exit 1
           fi
 
-      - name: Debug build products
+      - name: Package IPA (unsigned, plain App)
         run: |
           cd resources/ipa/iOSControlAgent
-          echo "=== All .app bundles ==="
-          find build -name "*.app" -type d
-          echo "=== All .xctest bundles ==="
-          find build -name "*.xctest" -type d
-          echo "=== Build/Products structure ==="
-          find build/Build/Products -maxdepth 3 -type d 2>/dev/null || echo "No Products dir"
 
-      - name: Package IPA (unsigned, with xctest bundle)
-        run: |
-          cd resources/ipa/iOSControlAgent
-          PRODUCTS_DIR="build/Build/Products/Release-iphoneos"
-          
           # Find the app bundle
           APP_PATH=$(find build/Build/Products -name "iOSControlAgent.app" -type d | head -1)
           if [ -z "$APP_PATH" ]; then
-            echo "❌ iOSControlAgent.app not found"
+            echo "iOSControlAgent.app not found"
             find build -name "*.app" -type d
             exit 1
           fi
           echo "Found app: $APP_PATH"
 
-          # Find the xctest bundle
-          XCTEST_PATH=$(find build/Build/Products -name "iOSControlAgentUITests.xctest" -type d | head -1)
-          if [ -z "$XCTEST_PATH" ]; then
-            echo "⚠️ iOSControlAgentUITests.xctest not found in Products, searching all..."
-            XCTEST_PATH=$(find build -name "iOSControlAgentUITests.xctest" -type d | head -1)
-          fi
-          
-          if [ -n "$XCTEST_PATH" ]; then
-            echo "Found xctest: $XCTEST_PATH"
-            # Copy xctest bundle into app's PlugIns directory
-            mkdir -p "$APP_PATH/PlugIns"
-            cp -r "$XCTEST_PATH" "$APP_PATH/PlugIns/"
-            echo "✅ xctest bundle copied to PlugIns/"
-          else
-            echo "❌ iOSControlAgentUITests.xctest NOT FOUND anywhere in build output!"
-            echo "Searching for any xctest..."
-            find build -name "*.xctest" -type d
-            exit 1
-          fi
-
           # List app contents
           echo "=== App contents ==="
           ls -la "$APP_PATH/"
-          echo "=== PlugIns ==="
-          ls -laR "$APP_PATH/PlugIns/"
           echo "=== Frameworks ==="
           ls -la "$APP_PATH/Frameworks/" 2>/dev/null || echo "No Frameworks directory"
 
@@ -117,12 +86,12 @@ jobs:
           find "$APP_PATH" -name "CodeResources" -type f -delete 2>/dev/null || true
           find "$APP_PATH" -name "embedded.mobileprovision" -type f -delete 2>/dev/null || true
 
-          # Create IPA
+          # Create IPA (plain App, no xctest bundle needed)
           mkdir -p Payload
           cp -r "$APP_PATH" Payload/
           zip -qr iOSControlAgent.ipa Payload/
           rm -rf Payload
-          echo "✅ IPA created: iOSControlAgent.ipa"
+          echo "IPA created: iOSControlAgent.ipa"
           ls -lh iOSControlAgent.ipa
 
       - name: Upload IPA artifact

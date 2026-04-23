@@ -16,8 +16,9 @@ settings:
     GCC_WARN_UNINITIALIZED_AUTOS: YES_AGGRESSIVE
 
 targets:
-  # 宿主 App — XCTRunner 壳
-  # bundleId 以 .xctrunner 结尾，作为 XCUITest 的宿主进程
+  # 普通 App — iOS 15+ App 模式运行
+  # 不依赖 XCTest，通过 ios launch 启动，HTTPServer 在 AppDelegate 中无条件启动
+  # bundleId 以 .xctrunner 结尾，兼容现有工具链
   iOSControlAgent:
     type: application
     platform: iOS
@@ -53,33 +54,3 @@ targets:
       properties:
         com.apple.security.network.server: true
         com.apple.security.network.client: true
-
-  # XCUITest Bundle — 包含所有自动化代码和 HTTPServer
-  # 由 runwda 启动，运行在 XCTest 进程中
-  iOSControlAgentUITests:
-    type: bundle.ui-testing
-    platform: iOS
-    sources:
-      - path: iOSControlAgentUITests
-        excludes:
-          - "**/.DS_Store"
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.ioscontrol.agent.uitests
-        CODE_SIGN_IDENTITY: ""
-        CODE_SIGNING_REQUIRED: NO
-        CODE_SIGNING_ALLOWED: NO
-        TARGETED_DEVICE_FAMILY: "1,2"
-        SWIFT_EMIT_LOC_STRINGS: YES
-        ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES: YES
-        OTHER_LDFLAGS:
-          - "-lsqlite3"
-          - "-framework"
-          - "JavaScriptCore"
-      configs:
-        Debug:
-          SWIFT_OPTIMIZATION_LEVEL: "-Onone"
-        Release:
-          SWIFT_OPTIMIZATION_LEVEL: "-O"
-    dependencies:
-      - target: iOSControlAgent

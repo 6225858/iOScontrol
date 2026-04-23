@@ -3,6 +3,7 @@
 //  iOSControlAgent
 //
 //  Swift/Objective-C 桥接头文件
+//  普通 App 模式，不导入 XCTest
 //
 
 #ifndef iOSControlAgent_Bridging_Header_h
