@@ -53,8 +53,6 @@ targets:
       properties:
         com.apple.security.network.server: true
         com.apple.security.network.client: true
-    dependencies:
-      - target: iOSControlAgentUITests
 
   # XCUITest Bundle — 包含所有自动化代码和 HTTPServer
   # 由 runwda 启动，运行在 XCTest 进程中
